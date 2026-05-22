@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Statistiques{% endblock %}
+{% block page_title %}Statistiques détaillées{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-strip{display:flex;gap:0;background:white;border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px}
+.stat-strip-item{flex:1;padding:20px 22px;border-right:1px solid #f1f5f9;transition:background .15s}
+.stat-strip-item:last-child{border-right:none}
+.stat-strip-item:hover{background:#fafbff}
+.stat-num{font-family:'Poppins',sans-serif;font-size:1.9rem;font-weight:700;line-height:1;margin-bottom:3px;color:#1a2540}
+.stat-lbl{font-size:.75rem;color:#9ca3af;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.stat-icon{font-size:1rem;margin-bottom:8px;display:block}
+.rank-item{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.rank-item:last-child{border-bottom:none}
+.rank-num{width:28px;height:28px;border-radius:50%;background:#e8f0fa;color:#005EB8;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+.rank-num.gold{background:#fef3c7;color:#92400e}
+.rank-num.silver{background:#f1f5f9;color:#374151}
+.rank-num.bronze{background:#fde8d8;color:#9a3412}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats globales -->
+<div class="stat-strip">
+  <div class="stat-strip-item">
+    <i class="bi bi-file-earmark-text stat-icon" style="color:#005EB8"></i>
+    <div class="stat-num">{{ total_demandes }}</div>
+    <div class="stat-lbl">Total demandes</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-check-circle stat-icon" style="color:#1a7b4b"></i>
+    <div class="stat-num" style="color:#1a7b4b">{{ total_inclus }}</div>
+    <div class="stat-lbl">Agents inclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-x-circle stat-icon" style="color:#c0392b"></i>
+    <div class="stat-num" style="color:#c0392b">{{ total_exclus }}</div>
+    <div class="stat-lbl">Agents exclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-calendar stat-icon" style="color:#6d28d9"></i>
+    <div class="stat-num">{{ nb_events }}</div>
+    <div class="stat-lbl">Événements total</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-people stat-icon" style="color:#f0861a"></i>
+    <div class="stat-num">{{ total_agents }}</div>
+    <div class="stat-lbl">Agents enregistrés</div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Évolution mensuelle -->
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-graph-up text-primary me-2"></i>Évolution des demandes (12 derniers mois)
+      </div>
+      <div class="card-body" style="padding:20px">
+        <canvas id="chartEvolution" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Donut types -->
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart text-primary me-2"></i>Répartition par type
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <canvas id="chartType" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Comparaison inter-éditions -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-steps text-primary me-2"></i>Comparaison entre éditions
+      </div>
+      <div class="card-body" style="padding:20px">
+        <canvas id="chartComparaison" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top services -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-trophy text-primary me-2"></i>Classement des services
+      </div>
+      <div class="card-body px-4 py-2">
+        {% for s in stats_service %}
+        <div class="rank-item">
+          <div class="rank-num {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+            {{ forloop.counter }}
+          </div>
+          <div class="flex-fill">
+            <div class="fw-600 small">{{ s.agent__service }}</div>
+            <div class="progress mt-1" style="height:5px">
+              <div class="progress-bar" style="width:{% widthratio s.total total_demandes 100 %}%;background:#005EB8"></div>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="fw-700 small" style="color:#005EB8">{{ s.total }}</div>
+            <div class="text-muted" style="font-size:.7rem">demande(s)</div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-4">Aucune donnée</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top gestionnaires -->
+<div class="card">
+  <div class="card-header">
+    <i class="bi bi-person-badge text-primary me-2"></i>Activité des gestionnaires
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-ocp mb-0">
+      <thead>
+        <tr>
+          <th>#</th><th>Gestionnaire</th><th>Service</th>
+          <th class="text-center">Saisies totales</th>
+          <th class="text-center">Inclus</th>
+          <th class="text-center">Exclus</th>
+          <th>Progression</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in stats_gestionnaires %}
+        <tr>
+          <td class="text-muted small">{{ forloop.counter }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div style="width:30px;height:30px;border-radius:50%;background:#e8f0fa;
+                          color:#005EB8;display:flex;align-items:center;justify-content:center;
+                          font-weight:700;font-size:.72rem;flex-shrink:0">
+                {{ g.gestionnaire__first_name|first|upper }}{{ g.gestionnaire__last_name|first|upper }}
+              </div>
+              <span class="fw-500 small">{{ g.gestionnaire__first_name }} {{ g.gestionnaire__last_name }}</span>
+            </div>
+          </td>
+          <td class="small text-muted">{{ g.gestionnaire__service|default:"—" }}</td>
+          <td class="text-center fw-700" style="color:#005EB8">{{ g.total }}</td>
+          <td class="text-center">
+            <span class="badge badge-inclus">{{ g.nb_inclus }}</span>
+          </td>
+          <td class="text-center">
+            <span class="badge badge-exclus">{{ g.nb_exclus }}</span>
+          </td>
+          <td style="min-width:120px">
+            <div class="progress" style="height:6px">
+              <div class="progress-bar" style="width:{% if max_saisies > 0 %}{% widthratio g.total max_saisies 100 %}{% else %}0{% endif %}%;background:#005EB8"></div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-3">Aucune donnée</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Évolution mensuelle
+const mLabels = [{% for m in evolution_mensuelle %}"{{ m.mois }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const mData   = [{% for m in evolution_mensuelle %}{{ m.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartEvolution'), {
+  type: 'line',
+  data: {
+    labels: mLabels,
+    datasets: [{
+      label: 'Demandes', data: mData,
+      borderColor: '#005EB8', backgroundColor: 'rgba(0,94,184,.08)',
+      borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#005EB8',
+      fill: true, tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 10 } } } }
+  }
+});
+
+// Donut types
+const tL = [{% for t in stats_type %}"{{ t.event__type_avance }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const tD = [{% for t in stats_type %}{{ t.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartType'), {
+  type: 'doughnut',
+  data: { labels: tL, datasets: [{ data: tD, backgroundColor: ['#005EB8','#1a7b4b','#f0861a'], borderWidth: 2, borderColor: '#fff' }] },
+  options: { responsive: true, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+});
+
+// Comparaison inter-éditions
+const cL = [{% for c in comparaison %}"{{ c.label }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const cI = [{% for c in comparaison %}{{ c.inclus }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const cE = [{% for c in comparaison %}{{ c.exclus }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartComparaison'), {
+  type: 'bar',
+  data: {
+    labels: cL,
+    datasets: [
+      { label: 'Inclus', data: cI, backgroundColor: 'rgba(26,123,75,.75)', borderRadius: 4 },
+      { label: 'Exclus', data: cE, backgroundColor: 'rgba(192,57,43,.75)',  borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 10 } } } }
+  }
+});
+</script>
+{% endblock %}

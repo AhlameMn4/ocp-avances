@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Connexion – OCP Avances Sociales</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family:'Inter',sans-serif; background:#f0f4fa; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .login-wrap { width:100%; max-width:440px; }
+    .login-card { background:white; border-radius:20px; box-shadow:0 20px 60px rgba(0,94,184,.15); overflow:hidden; }
+    .login-header { background:linear-gradient(135deg,#00418a,#005EB8,#0072d6); padding:40px 36px 32px; text-align:center; }
+    .logo-box { background:white; border-radius:12px; display:inline-flex; align-items:center; padding:10px 20px; margin-bottom:16px; }
+    .logo-box span { font-family:'Poppins',sans-serif; font-weight:700; font-size:1.6rem; color:#005EB8; letter-spacing:3px; }
+    .login-header h2 { color:white; font-size:1rem; font-weight:400; margin:0; opacity:.9; }
+    .login-body { padding:36px; }
+    .form-label { font-weight:500; font-size:.875rem; color:#374151; }
+    .form-control { border:1.5px solid #e2e8f0; border-radius:10px; padding:12px 16px; font-size:.9rem; transition:all .2s; }
+    .form-control:focus { border-color:#005EB8; box-shadow:0 0 0 3px rgba(0,94,184,.12); }
+    .input-group-text { border:1.5px solid #e2e8f0; background:#f8fafc; border-radius:10px 0 0 10px; color:#6b7280; }
+    .btn-login { background:linear-gradient(135deg,#005EB8,#0072d6); border:none; color:white; width:100%; padding:13px; border-radius:10px; font-weight:600; font-size:1rem; transition:all .2s; margin-top:8px; }
+    .btn-login:hover { background:linear-gradient(135deg,#00418a,#005EB8); color:white; transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,94,184,.3); }
+    .alert { border:none; border-radius:10px; font-size:.875rem; }
+    .login-footer { background:#f8fafc; padding:16px 36px; text-align:center; border-top:1px solid #e2e8f0; color:#9ca3af; font-size:.78rem; }
+  </style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-box"><span>OCP</span></div>
+      <h2><i class="bi bi-shield-lock me-2"></i>Plateforme Avances Sociales</h2>
+    </div>
+    <div class="login-body">
+      <h5 class="fw-600 mb-1" style="color:#1a2540">Connexion</h5>
+      <p class="text-muted mb-4" style="font-size:.85rem">Entrez vos identifiants pour accéder à votre espace</p>
+
+      {% if form.errors %}
+      <div class="alert alert-danger"><i class="bi bi-exclamation-triangle me-2"></i>Identifiants incorrects. Veuillez réessayer.</div>
+      {% endif %}
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}"><i class="bi bi-info-circle me-2"></i>{{ message }}</div>
+      {% endfor %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label">Identifiant</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" name="username" class="form-control" placeholder="Votre identifiant" required autofocus style="border-radius:0 10px 10px 0;border-left:none"/>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Mot de passe</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" id="pwd" class="form-control" placeholder="••••••••" required style="border-radius:0 10px 10px 0;border-left:none"/>
+            <button type="button" class="btn btn-outline-secondary border" onclick="togglePwd()" style="border-radius:0 10px 10px 0;border-left:none"><i class="bi bi-eye" id="eyeIcon"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="btn-login"><i class="bi bi-box-arrow-in-right me-2"></i>Se connecter</button>
+      </form>
+    </div>
+    <div class="login-footer">
+      <i class="bi bi-shield-check me-1"></i>Accès réservé au personnel OCP autorisé
+    </div>
+  </div>
+  <p class="text-center text-muted mt-3" style="font-size:.75rem">© 2025 OCP Group – Direction des Ressources Humaines</p>
+</div>
+<script>
+function togglePwd(){
+  const p=document.getElementById('pwd'), i=document.getElementById('eyeIcon');
+  p.type=p.type==='password'?'text':'password';
+  i.className=p.type==='password'?'bi bi-eye':'bi bi-eye-slash';
+}
+</script>
+</body>
+</html>

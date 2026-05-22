@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% block title %}Profil – {{ gest.get_full_name }}{% endblock %}
+{% block page_title %}Profil gestionnaire{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profil-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius); padding: 28px 36px;
+    color: white; margin-bottom: 24px;
+    display: flex; align-items: center; gap: 20px;
+  }
+  .profil-av {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: rgba(255,255,255,.18); border: 2.5px solid rgba(255,255,255,.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins',sans-serif; font-weight: 800;
+    font-size: 1.7rem; color: white; flex-shrink: 0;
+  }
+  .info-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; border-bottom: 1px solid #f1f5f9;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--ocp-lite); color: var(--ocp);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem; flex-shrink: 0;
+  }
+  .info-lbl { font-size: .72rem; color: #9ca3af; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+  .info-val { font-size: .88rem; color: #1a2540; font-weight: 600; }
+  .stat-strip { display:flex;gap:0;background:white;border-radius:var(--radius);
+    box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px }
+  .stat-strip-item { flex:1;padding:18px 20px;border-right:1px solid #f1f5f9;transition:background .15s }
+  .stat-strip-item:last-child { border-right:none }
+  .stat-num { font-family:'Poppins',sans-serif;font-size:1.7rem;font-weight:700;
+    line-height:1;margin-bottom:3px;color:#1a2540 }
+  .stat-lbl { font-size:.73rem;color:#9ca3af;font-weight:500;
+    text-transform:uppercase;letter-spacing:.4px }
+  .stat-icon { font-size:.95rem;margin-bottom:7px;display:block }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête -->
+<div class="profil-header">
+  <div class="profil-av">{{ gest.initiales }}</div>
+  <div class="flex-fill">
+    <div style="font-family:'Poppins',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:6px">
+      {{ gest.get_full_name }}
+    </div>
+    <div class="d-flex gap-2 flex-wrap" style="opacity:.85;font-size:.82rem">
+      <span><i class="bi bi-person-badge me-1"></i>Gestionnaire</span>
+      {% if gest.service %}
+      <span>·</span>
+      <span><i class="bi bi-building me-1"></i>{{ gest.service }}</span>
+      {% endif %}
+      <span>·</span>
+      <span><i class="bi bi-calendar3 me-1"></i>Depuis {{ gest.date_creation|date:"d/m/Y" }}</span>
+    </div>
+  </div>
+  <div class="d-flex gap-2 ms-auto">
+    <a href="{% url 'accounts:modifier_gestionnaire' gest.pk %}"
+       style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+              color:white;border-radius:9px;padding:9px 16px;font-size:.82rem;
+              font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px"
+       onmouseover="this.style.background='rgba(255,255,255,.25)'"
+       onmouseout="this.style.background='rgba(255,255,255,.15)'">
+      <i class="bi bi-pencil"></i> Modifier
+    </a>
+    <a href="{% url 'accounts:toggle_gestionnaire' gest.pk %}"
+       style="background:rgba({% if gest.actif %}220,53,69{% else %}26,123,75{% endif %},.3);
+              border:1.5px solid rgba({% if gest.actif %}220,53,69{% else %}26,123,75{% endif %},.4);
+              color:white;border-radius:9px;padding:9px 16px;font-size:.82rem;
+              font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px"
+       onclick="return confirm('{% if gest.actif %}Désactiver{% else %}Activer{% endif %} ce compte ?')"
+       onmouseover="this.style.opacity='.8'"
+       onmouseout="this.style.opacity='1'">
+      <i class="bi bi-{% if gest.actif %}person-x{% else %}person-check{% endif %}"></i>
+      {% if gest.actif %}Désactiver{% else %}Activer{% endif %}
+    </a>
+    <a href="{% url 'accounts:liste_gestionnaires' %}"
+       style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);
+              color:rgba(255,255,255,.8);border-radius:9px;padding:9px 16px;font-size:.82rem;
+              font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px"
+       onmouseover="this.style.background='rgba(255,255,255,.2)'"
+       onmouseout="this.style.background='rgba(255,255,255,.1)'">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stat-strip">
+  <div class="stat-strip-item">
+    <i class="bi bi-file-earmark-text stat-icon" style="color:#005EB8"></i>
+    <div class="stat-num">{{ total }}</div>
+    <div class="stat-lbl">Total saisies</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-check-circle stat-icon" style="color:#1a7b4b"></i>
+    <div class="stat-num" style="color:#1a7b4b">{{ inclus }}</div>
+    <div class="stat-lbl">Agents inclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-x-circle stat-icon" style="color:#c0392b"></i>
+    <div class="stat-num" style="color:#c0392b">{{ exclus }}</div>
+    <div class="stat-lbl">Agents exclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-people stat-icon" style="color:#f0861a"></i>
+    <div class="stat-num">{{ agents.count }}</div>
+    <div class="stat-lbl">Agents – {{ gest.service }}</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Infos personnelles -->
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-person-lines-fill text-primary me-2"></i>Informations
+      </div>
+      <div class="card-body p-0">
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-at"></i></div>
+          <div>
+            <div class="info-lbl">Identifiant</div>
+            <div class="info-val">
+              <code style="background:#f0f4fa;padding:2px 9px;border-radius:6px;
+                           font-size:.82rem;color:#005EB8">{{ gest.username }}</code>
+            </div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-envelope"></i></div>
+          <div>
+            <div class="info-lbl">Email</div>
+            <div class="info-val">{{ gest.email|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-building"></i></div>
+          <div>
+            <div class="info-lbl">Service</div>
+            <div class="info-val">{{ gest.service|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-telephone"></i></div>
+          <div>
+            <div class="info-lbl">Téléphone</div>
+            <div class="info-val">{{ gest.telephone|default:"—" }}</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-toggle-on"></i></div>
+          <div>
+            <div class="info-lbl">Statut</div>
+            <div class="info-val">
+              <span class="badge {% if gest.actif %}badge-actif{% else %}badge-ferme{% endif %} px-3 py-2">
+                <i class="bi bi-{% if gest.actif %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+                {% if gest.actif %}Actif{% else %}Désactivé{% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon"><i class="bi bi-calendar-plus"></i></div>
+          <div>
+            <div class="info-lbl">Créé le</div>
+            <div class="info-val">{{ gest.date_creation|date:"d/m/Y à H:i" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats par événement -->
+    {% if stats_ev %}
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-bar-chart text-primary me-2"></i>Saisies par campagne
+      </div>
+      <div class="card-body px-4 py-2">
+        {% for s in stats_ev %}
+        <div style="padding:10px 0;border-bottom:1px solid #f1f5f9">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small fw-500">{{ s.event__type_avance }} {{ s.event__annee }}</span>
+            <span class="badge bg-primary" style="font-size:.72rem">{{ s.nb }}</span>
+          </div>
+          <div class="progress" style="height:5px">
+            <div class="progress-bar" style="width:{% if total > 0 %}{% widthratio s.nb total 100 %}{% else %}0{% endif %}%;background:#005EB8"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Demandes saisies -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-list-ul text-primary me-2"></i>Historique des saisies
+        </span>
+        <span class="badge bg-primary">{{ total }}</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height:500px;overflow-y:auto">
+          <table class="table table-ocp mb-0">
+            <thead style="position:sticky;top:0;z-index:1">
+              <tr>
+                <th>Matricule</th>
+                <th>Agent</th>
+                <th>Événement</th>
+                <th class="text-center">Statut</th>
+                <th>Date saisie</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in demandes %}
+              <tr>
+                <td>
+                  <code style="background:#f0f4fa;padding:2px 8px;border-radius:5px;
+                               font-size:.78rem;color:#005EB8">{{ d.agent.matricule }}</code>
+                </td>
+                <td>
+                  <div class="fw-500 small">{{ d.agent.nom_complet }}</div>
+                  <div class="text-muted" style="font-size:.72rem">{{ d.agent.service }}</div>
+                </td>
+                <td class="small">{{ d.event.get_type_avance_display }} {{ d.event.annee }}</td>
+                <td class="text-center">
+                  <span class="badge {% if d.statut == 'INCLUS' %}badge-inclus{% else %}badge-exclus{% endif %}">
+                    {{ d.get_statut_display }}
+                  </span>
+                </td>
+                <td class="small text-muted">{{ d.date_saisie|date:"d/m/Y H:i" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="bi bi-inbox d-block mb-2 fs-2 opacity-25"></i>
+                  Aucune saisie effectuée
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

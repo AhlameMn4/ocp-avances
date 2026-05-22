@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Confirmation saisie{% endblock %}
+{% block page_title %}Confirmer la saisie{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+
+    {% if doublon %}
+    <!-- ── Doublon détecté ── -->
+    <div class="card" style="border-top:4px solid #f59e0b">
+      <div class="card-body text-center p-5">
+        <div style="width:70px;height:70px;border-radius:50%;background:#fff3cd;
+                    display:flex;align-items:center;justify-content:center;
+                    margin:0 auto 20px;font-size:2rem">
+          ⚠️
+        </div>
+        <h5 class="fw-bold mb-2" style="color:#92400e">Doublon détecté</h5>
+        <p class="text-muted mb-1">
+          L'agent <strong>{{ agent.nom_complet }}</strong>
+          <span class="text-muted small">({{ agent.matricule }})</span>
+        </p>
+        <p class="text-muted mb-4">
+          possède déjà une demande enregistrée pour l'événement
+          <strong>{{ ev }}</strong>.
+        </p>
+        <a href="{% url 'demandes:saisie' ev.pk %}" class="btn btn-outline-secondary px-5">
+          <i class="bi bi-arrow-left me-2"></i>Retour à la saisie
+        </a>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- ── Confirmation ── -->
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-check2-square text-primary"></i>
+        Étape 2 — Confirmer et enregistrer
+      </div>
+      <div class="card-body p-4">
+
+        <p class="text-muted small mb-4">
+          Vérifiez les informations ci-dessous avant de valider l'enregistrement.
+        </p>
+
+        <!-- Infos agent -->
+        <div class="p-3 rounded-3 mb-3"
+             style="background:#f0f6ff;border:1.5px solid #c8dcf5">
+          <div class="small fw-700 text-muted mb-3"
+               style="text-transform:uppercase;letter-spacing:.4px">
+            Agent
+          </div>
+          <div class="row g-2" style="font-size:.875rem">
+            <div class="col-5 text-muted">Matricule</div>
+            <div class="col-7">
+              <code style="background:white;padding:2px 9px;border-radius:6px;
+                           font-size:.82rem;color:#005EB8;border:1px solid #e5eaf3">
+                {{ agent.matricule }}
+              </code>
+            </div>
+            <div class="col-5 text-muted">Nom complet</div>
+            <div class="col-7 fw-600">{{ agent.nom_complet }}</div>
+            <div class="col-5 text-muted">Service</div>
+            <div class="col-7">{{ agent.service }}</div>
+          </div>
+        </div>
+
+        <!-- Infos événement + statut -->
+        <div class="p-3 rounded-3 mb-3"
+             style="background:#f8faff;border:1.5px solid #e5eaf3">
+          <div class="small fw-700 text-muted mb-3"
+               style="text-transform:uppercase;letter-spacing:.4px">
+            Événement & Statut
+          </div>
+          <div class="row g-2" style="font-size:.875rem">
+            <div class="col-5 text-muted">Événement</div>
+            <div class="col-7 fw-600">{{ ev }}</div>
+            <div class="col-5 text-muted">Statut enregistré</div>
+            <div class="col-7">
+              <span class="badge {% if statut_prevu == 'INCLUS' %}badge-inclus{% else %}badge-exclus{% endif %} px-3 py-2"
+                    style="font-size:.82rem">
+                <i class="bi bi-{% if statut_prevu == 'INCLUS' %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+                {{ statut_prevu }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explication logique -->
+        <div class="alert {% if logique_color == 'success' %}alert-success{% else %}alert-danger{% endif %} small mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          {% if logique_color == 'success' %}
+            Les agents saisis dans cet événement <strong>bénéficient</strong> de l'avance.
+          {% else %}
+            Les agents saisis dans cet événement sont <strong>exclus</strong> du bénéfice.
+          {% endif %}
+        </div>
+
+        <!-- Boutons -->
+        <div class="d-flex gap-3">
+          <!-- Valider -->
+          <form method="post"
+                action="{% url 'demandes:confirmer' ev.pk %}"
+                class="flex-fill">
+            {% csrf_token %}
+            <input type="hidden" name="matricule" value="{{ agent.matricule }}"/>
+            <input type="hidden" name="action" value="confirmer"/>
+            <button type="submit" class="btn btn-ocp w-100">
+              <i class="bi bi-check-circle me-2"></i>Valider et enregistrer
+            </button>
+          </form>
+
+          <!-- Annuler -->
+          <a href="{% url 'demandes:saisie' ev.pk %}"
+             class="btn btn-outline-secondary flex-fill">
+            <i class="bi bi-arrow-left me-2"></i>Annuler
+          </a>
+        </div>
+
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

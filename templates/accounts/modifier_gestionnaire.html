@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Modifier – {{ gest.get_full_name }}{% endblock %}
+{% block page_title %}Modifier le compte gestionnaire{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header d-flex align-items-center gap-3">
+        <div style="width:40px;height:40px;border-radius:50%;background:#e8f0fa;color:#005EB8;display:flex;align-items:center;justify-content:center;font-weight:700">
+          {{ gest.initiales }}
+        </div>
+        <div>
+          <div class="fw-600">{{ gest.get_full_name }}</div>
+          <div class="text-muted small">{{ gest.username }}</div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="first_name" class="form-control" value="{{ gest.first_name }}" required/>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Nom</label>
+              <input type="text" name="last_name" class="form-control" value="{{ gest.last_name }}" required/>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" value="{{ gest.email }}"/>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label">Service</label>
+              <input type="text" name="service" class="form-control" value="{{ gest.service }}" list="servicesList"/>
+              <datalist id="servicesList">
+                <option value="Direction Financière"/><option value="Ressources Humaines"/>
+                <option value="Direction Technique"/><option value="Informatique & SI"/>
+                <option value="Logistique & Achats"/><option value="Production & Mines"/>
+                <option value="Qualité & HSE"/><option value="Commercial & Marketing"/>
+              </datalist>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Téléphone</label>
+              <input type="text" name="telephone" class="form-control" value="{{ gest.telephone }}"/>
+            </div>
+          </div>
+          <div class="d-flex gap-3 mt-4">
+            <button type="submit" class="btn btn-ocp flex-fill"><i class="bi bi-check-circle me-2"></i>Enregistrer</button>
+            <a href="{% url 'accounts:liste_gestionnaires' %}" class="btn btn-outline-secondary flex-fill">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

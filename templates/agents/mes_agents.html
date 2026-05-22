@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Mes agents{% endblock %}
+{% block page_title %}Mes agents – {{ service }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Agents du service <span style="color:#005EB8">{{ service }}</span></h4>
+    <p class="text-muted mb-0 small">{{ total }} agent(s) · Consultation uniquement</p>
+  </div>
+  <span class="badge bg-light text-dark border px-3 py-2">
+    <i class="bi bi-eye me-1"></i>Lecture seule
+  </span>
+</div>
+
+<!-- Stats rapides -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="kpi kpi-blue">
+      <i class="bi bi-people"></i>
+      <div class="kpi-val">{{ total }}</div>
+      <div class="kpi-lbl">Total agents</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi kpi-green">
+      <i class="bi bi-envelope"></i>
+      <div class="kpi-val">{{ agents|length }}</div>
+      <div class="kpi-lbl">Avec email renseigné</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi kpi-orange">
+      <i class="bi bi-building"></i>
+      <div class="kpi-val">{{ service|truncatechars:12 }}</div>
+      <div class="kpi-lbl">Votre service</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <!-- Recherche -->
+  <div class="card-header">
+    <div class="d-flex gap-3 align-items-center">
+      <i class="bi bi-people text-primary"></i>
+      <span class="fw-600">Liste des agents</span>
+      <input type="text" id="searchInput" class="form-control ms-auto" style="max-width:260px"
+             placeholder="Rechercher par nom ou matricule…"
+             oninput="filtrerAgents(this.value)"/>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-ocp mb-0" id="agentsTable">
+        <thead>
+          <tr>
+            <th style="width:50px">#</th>
+            <th>Matricule</th>
+            <th>Nom complet</th>
+            <th>Poste / Fonction</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in agents %}
+          <tr class="agent-row">
+            <td>
+              <div style="width:32px;height:32px;border-radius:50%;background:#e8f0fa;color:#005EB8;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">
+                {{ a.initiales }}
+              </div>
+            </td>
+            <td>
+              <code style="background:#f0f4fa;padding:3px 9px;border-radius:6px;font-size:.8rem;color:#005EB8">{{ a.matricule }}</code>
+            </td>
+            <td>
+              <div class="fw-500">{{ a.nom_complet }}</div>
+            </td>
+            <td class="small text-muted">{{ a.poste|default:"—" }}</td>
+            <td class="small text-muted">{{ a.email|default:"—" }}</td>
+            <td class="small text-muted">{{ a.telephone|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-5">
+            <i class="bi bi-people d-block mb-2 fs-2 opacity-25"></i>
+            Aucun agent dans votre service pour le moment.<br>
+            <small>L'administrateur RH peut ajouter des agents à votre service.</small>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card-header" style="border-top:1px solid #eef2f8;border-radius:0 0 12px 12px">
+    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Ces informations sont en lecture seule. Contactez l'administration RH pour toute modification.</small>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filtrerAgents(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.agent-row').forEach(row => {
+    const txt = row.textContent.toLowerCase();
+    row.style.display = txt.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

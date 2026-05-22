@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% block title %}Mes notifications{% endblock %}
+{% block page_title %}Mes notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notif-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    color: white;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .notif-card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 22px;
+    border: 1.5px solid #eef2f8;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: pointer;
+  }
+  .notif-card:hover {
+    border-color: #c8dcf5;
+    box-shadow: 0 4px 16px rgba(0,94,184,.07);
+  }
+  .notif-card.unread {
+    border-left: 4px solid #005EB8;
+    background: #f8faff;
+  }
+  .notif-card.unread:hover {
+    background: #f0f6ff;
+  }
+  .notif-icon {
+    width: 42px; height: 42px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .notif-icon.agent  { background: #e6f4ed; color: #1a7b4b; }
+  .notif-icon.compte { background: #e8f0fa; color: #005EB8; }
+  .notif-icon.event  { background: #fff3cd; color: #92400e; }
+  .notif-icon.default{ background: #f1f5f9; color: #6b7280; }
+  .notif-title { font-weight: 700; font-size: .9rem; color: #1a2540; margin-bottom: 3px; }
+  .notif-msg   { font-size: .845rem; color: #6b7280; line-height: 1.55; }
+  .notif-time  { font-size: .72rem; color: #9ca3af; margin-top: 5px; }
+  .badge-new   { background: #005EB8; color: white; font-size: .62rem; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
+
+  .stat-strip  { display:flex;gap:0;background:white;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px }
+  .stat-strip-item { flex:1;padding:18px 22px;border-right:1px solid #f1f5f9;transition:background .15s }
+  .stat-strip-item:last-child { border-right:none }
+  .stat-num { font-family:'Poppins',sans-serif;font-size:1.7rem;font-weight:700;line-height:1;margin-bottom:3px;color:#1a2540 }
+  .stat-lbl { font-size:.73rem;color:#9ca3af;font-weight:500;text-transform:uppercase;letter-spacing:.4px }
+  .stat-icon { font-size:.95rem;margin-bottom:7px;display:block }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête -->
+<div class="notif-header">
+  <div style="width:52px;height:52px;border-radius:13px;background:rgba(255,255,255,.18);
+              border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;
+              justify-content:center;font-size:1.5rem;flex-shrink:0">
+    <i class="bi bi-bell"></i>
+  </div>
+  <div class="flex-fill">
+    <div style="font-family:'Poppins',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:4px">
+      Centre de notifications
+    </div>
+    <div style="opacity:.75;font-size:.85rem">
+      {{ total }} notification(s) au total —
+      {% if non_lues > 0 %}
+        <strong>{{ non_lues }} non lue(s)</strong>
+      {% else %}
+        tout est lu
+      {% endif %}
+    </div>
+  </div>
+  <!-- Actions globales -->
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    {% if non_lues > 0 %}
+    <button type="submit" name="action" value="marquer_toutes"
+            style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+                   color:white;border-radius:9px;padding:9px 16px;font-size:.82rem;
+                   font-weight:600;cursor:pointer;"
+            onmouseover="this.style.background='rgba(255,255,255,.25)'"
+            onmouseout="this.style.background='rgba(255,255,255,.15)'">
+      <i class="bi bi-check2-all me-1"></i>Tout marquer lu
+    </button>
+    {% endif %}
+    <button type="submit" name="action" value="supprimer_lues"
+            style="background:rgba(220,53,69,.3);border:1.5px solid rgba(220,53,69,.4);
+                   color:white;border-radius:9px;padding:9px 16px;font-size:.82rem;
+                   font-weight:600;cursor:pointer;"
+            onmouseover="this.style.background='rgba(220,53,69,.5)'"
+            onmouseout="this.style.background='rgba(220,53,69,.3)'"
+            onclick="return confirm('Supprimer toutes les notifications lues ?')">
+      <i class="bi bi-trash me-1"></i>Supprimer les lues
+    </button>
+  </form>
+</div>
+
+<!-- Stats -->
+<div class="stat-strip">
+  <div class="stat-strip-item">
+    <i class="bi bi-bell stat-icon" style="color:#005EB8"></i>
+    <div class="stat-num">{{ total }}</div>
+    <div class="stat-lbl">Total</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-envelope stat-icon" style="color:#c0392b"></i>
+    <div class="stat-num" style="color:{% if non_lues > 0 %}#c0392b{% else %}#1a7b4b{% endif %}">{{ non_lues }}</div>
+    <div class="stat-lbl">Non lues</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-check2-all stat-icon" style="color:#1a7b4b"></i>
+    <div class="stat-num" style="color:#1a7b4b">{{ total|add:"-"|add:non_lues }}</div>
+    <div class="stat-lbl">Lues</div>
+  </div>
+</div>
+
+<!-- Filtre rapide -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+  <button class="btn btn-sm btn-ocp" onclick="filtrerNotifs('all')">
+    Toutes ({{ total }})
+  </button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="filtrerNotifs('unread')">
+    <i class="bi bi-envelope me-1"></i>Non lues ({{ non_lues }})
+  </button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="filtrerNotifs('agent')">
+    <i class="bi bi-person-plus me-1"></i>Agents
+  </button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="filtrerNotifs('compte')">
+    <i class="bi bi-person-badge me-1"></i>Comptes
+  </button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="filtrerNotifs('event')">
+    <i class="bi bi-calendar me-1"></i>Événements
+  </button>
+</div>
+
+<!-- Liste notifications -->
+<div id="notifList">
+  {% for n in notifs %}
+  <div class="notif-card {% if not n.lue %}unread{% endif %}"
+       data-type="{{ n.type_notif }}"
+       data-lue="{{ n.lue|yesno:'true,false' }}"
+       onclick="marquerLue({{ n.pk }}, this)">
+    <!-- Icône -->
+    <div class="notif-icon {% if n.type_notif == 'AGENT_AJOUTE' %}agent{% elif n.type_notif == 'COMPTE_CREE' %}compte{% elif 'EVENT' in n.type_notif %}event{% else %}default{% endif %}">
+      <i class="bi bi-{% if n.type_notif == 'AGENT_AJOUTE' %}person-plus{% elif n.type_notif == 'COMPTE_CREE' %}person-badge{% elif 'EVENT' in n.type_notif %}calendar-event{% else %}bell{% endif %}"></i>
+    </div>
+
+    <!-- Contenu -->
+    <div class="flex-fill">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="notif-title">{{ n.titre }}</div>
+        <div class="d-flex align-items-center gap-2 ms-3 flex-shrink-0">
+          {% if not n.lue %}
+          <span class="badge-new">Nouveau</span>
+          {% endif %}
+          <span class="text-muted" style="font-size:.72rem;white-space:nowrap">
+            {{ n.date_creation|date:"d/m/Y H:i" }}
+          </span>
+        </div>
+      </div>
+      <div class="notif-msg">{{ n.message }}</div>
+      <div class="notif-time">
+        <i class="bi bi-clock me-1"></i>{{ n.date_creation|timesince }}
+        — <span style="color:{% if n.type_notif == 'AGENT_AJOUTE' %}#1a7b4b{% elif n.type_notif == 'COMPTE_CREE' %}#005EB8{% else %}#6b7280{% endif %}">{{ n.get_type_notif_display }}</span>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="card">
+    <div class="card-body text-center py-5">
+      <i class="bi bi-bell-slash d-block mb-3 fs-1 opacity-25"></i>
+      <h5 class="text-muted">Aucune notification</h5>
+      <p class="text-muted small">Vous n'avez pas encore reçu de notifications.</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const MARK_URL = "{% url 'accounts:notif_lue' 0 %}".replace('/0/', '/');
+
+async function marquerLue(pk, el) {
+  if (el.dataset.lue === 'true') return; // Déjà lue, rien à faire
+  try {
+    const r = await fetch(MARK_URL + pk + '/lue/', {
+      method: 'GET',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await r.json();
+    if (data.ok) {
+      el.classList.remove('unread');
+      el.dataset.lue = 'true';
+      // Supprimer badge "Nouveau"
+      const badge = el.querySelector('.badge-new');
+      if (badge) badge.remove();
+      // Mettre à jour compteur topbar
+      const cnt = document.querySelector('.notif-count');
+      if (cnt) {
+        const n = parseInt(cnt.textContent) - 1;
+        if (n <= 0) cnt.remove();
+        else cnt.textContent = n;
+      }
+    }
+  } catch(e) {}
+}
+
+function filtrerNotifs(filtre) {
+  document.querySelectorAll('.notif-card').forEach(card => {
+    if (filtre === 'all') {
+      card.style.display = 'flex';
+    } else if (filtre === 'unread') {
+      card.style.display = card.dataset.lue === 'false' ? 'flex' : 'none';
+    } else {
+      // Filtrer par type
+      const typeMap = { agent: 'AGENT_AJOUTE', compte: 'COMPTE_CREE', event: 'EVENT' };
+      const t = card.dataset.type || '';
+      card.style.display = t.includes(typeMap[filtre] || filtre.toUpperCase()) ? 'flex' : 'none';
+    }
+  });
+  // Mettre à jour bouton actif
+  document.querySelectorAll('.btn').forEach(b => {
+    b.classList.remove('btn-ocp');
+    b.classList.add('btn-outline-secondary');
+  });
+  event.target.classList.remove('btn-outline-secondary');
+  event.target.classList.add('btn-ocp');
+}
+</script>
+{% endblock %}

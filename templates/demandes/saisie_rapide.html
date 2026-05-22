@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% block title %}Saisie rapide – {{ ev }}{% endblock %}
+{% block page_title %}Saisie rapide – {{ ev }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .saisie-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    color: white;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .saisie-header-icon {
+    width: 52px; height: 52px; border-radius: 13px;
+    background: rgba(255,255,255,.18);
+    border: 2px solid rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; flex-shrink: 0;
+  }
+
+  /* Zone de saisie rapide */
+  .saisie-zone {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+  .matricule-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #matriculeInput {
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 2.5px solid #e5eaf3;
+    border-radius: 12px;
+    padding: 14px 20px;
+    flex: 1;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    font-family: 'Poppins', sans-serif;
+    color: #005EB8;
+  }
+  #matriculeInput:focus {
+    border-color: #005EB8;
+    box-shadow: 0 0 0 4px rgba(0,94,184,.1);
+  }
+  #matriculeInput.found  { border-color: #1a7b4b; box-shadow: 0 0 0 4px rgba(26,123,75,.1); }
+  #matriculeInput.error  { border-color: #c0392b; box-shadow: 0 0 0 4px rgba(192,57,43,.1); }
+  #matriculeInput.loading { border-color: #f0861a; }
+
+  #btnSaisir {
+    height: 58px; width: 58px; border-radius: 12px;
+    background: #005EB8; border: none; color: white;
+    font-size: 1.3rem; cursor: pointer;
+    transition: all .2s; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #btnSaisir:hover   { background: #003f8a; transform: translateY(-1px); }
+  #btnSaisir:disabled{ background: #e5eaf3; color: #9ca3af; cursor: not-allowed; transform: none; }
+
+  /* Panneau agent */
+  #agentPanel {
+    border-radius: 12px;
+    padding: 18px 22px;
+    display: none;
+    margin-top: 16px;
+    align-items: center;
+    gap: 16px;
+    animation: slideIn .2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity:0; transform:translateY(-8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  #agentPanel.found { background: #f0f6ff; border: 1.5px solid #c8dcf5; }
+  #agentPanel.doublon { background: #fff3cd; border: 1.5px solid #ffc107; }
+  #agentPanel.error  { background: #fff5f5; border: 1.5px solid #f5c6cb; }
+
+  .agent-av {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #005EB8; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .agent-av.warn { background: #f0861a; }
+  .agent-av.err  { background: #c0392b; }
+
+  .kbd-hint {
+    background: #f1f5f9; border: 1px solid #e2e8f0;
+    border-radius: 6px; padding: 2px 8px;
+    font-size: .72rem; font-weight: 700; color: #4b5563;
+    font-family: monospace;
+  }
+
+  /* Compteur live */
+  .live-counter {
+    display: flex; gap: 24px; align-items: center;
+    padding: 14px 20px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .counter-item { text-align: center; }
+  .counter-val {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.6rem; font-weight: 700; line-height: 1;
+  }
+  .counter-lbl { font-size: .72rem; color: #9ca3af; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
+  .counter-divider { width: 1px; height: 40px; background: #f1f5f9; }
+
+  /* Toast notification */
+  .toast-stack {
+    position: fixed; bottom: 24px; right: 24px;
+    display: flex; flex-direction: column; gap: 8px;
+    z-index: 9999; max-width: 340px;
+  }
+  .toast-item {
+    background: white; border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.15);
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+    animation: toastIn .25s ease;
+    border-left: 4px solid #005EB8;
+  }
+  .toast-item.success { border-left-color: #1a7b4b; }
+  .toast-item.warning { border-left-color: #f59e0b; }
+  .toast-item.error   { border-left-color: #c0392b; }
+  @keyframes toastIn {
+    from { opacity:0; transform:translateX(30px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  @keyframes toastOut {
+    from { opacity:1; transform:translateX(0); }
+    to   { opacity:0; transform:translateX(30px); }
+  }
+
+  /* Table saisies rapide */
+  .table-saisies thead th { font-size: .78rem; }
+  .table-saisies td { font-size: .845rem; }
+  .row-new { animation: rowFade .5s ease; }
+  @keyframes rowFade {
+    from { background: rgba(0,94,184,.08); }
+    to   { background: transparent; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête événement -->
+<div class="saisie-header">
+  <div class="saisie-header-icon">
+    <i class="bi bi-lightning-charge"></i>
+  </div>
+  <div class="flex-fill">
+    <div style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:4px">
+      {{ ev.get_type_avance_display }} {{ ev.annee }} — Saisie rapide
+    </div>
+    <div style="opacity:.75;font-size:.82rem">
+      {{ ev.date_debut|date:"d/m/Y" }} → {{ ev.date_fin|date:"d/m/Y" }}
+      &nbsp;·&nbsp;
+      <span id="headerCount">{{ total }} saisie(s)</span>
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    {% with lbl=ev.logique %}
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+                 padding:6px 14px;border-radius:100px;font-size:.8rem;font-weight:600">
+      <i class="bi bi-{% if lbl.0 == 'INCLUS' %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+      Statut : {{ lbl.0 }}
+    </span>
+    {% endwith %}
+    <span class="badge bg-{{ ev.couleur }} px-3 py-2">{{ ev.jours_restants }}j restants</span>
+  </div>
+</div>
+
+<!-- Compteurs live -->
+<div class="live-counter">
+  <div class="counter-item">
+    <div class="counter-val" id="cntTotal" style="color:#005EB8">{{ total }}</div>
+    <div class="counter-lbl">Saisies totales</div>
+  </div>
+  <div class="counter-divider"></div>
+  <div class="counter-item">
+    <div class="counter-val" id="cntInclus" style="color:#1a7b4b">{{ nb_inclus }}</div>
+    <div class="counter-lbl">Inclus</div>
+  </div>
+  <div class="counter-divider"></div>
+  <div class="counter-item">
+    <div class="counter-val" id="cntExclus" style="color:#c0392b">{{ nb_exclus }}</div>
+    <div class="counter-lbl">Exclus</div>
+  </div>
+  <div class="counter-divider"></div>
+  <div class="counter-item">
+    <div class="counter-val" id="cntSession" style="color:#f0861a">0</div>
+    <div class="counter-lbl">Cette session</div>
+  </div>
+  <div class="ms-auto d-flex align-items-center gap-8">
+    <span class="text-muted small">
+      <span class="kbd-hint">Enter</span> pour rechercher &nbsp;·&nbsp;
+      <span class="kbd-hint">Enter</span> à nouveau pour confirmer
+    </span>
+  </div>
+</div>
+
+<!-- Zone saisie rapide -->
+<div class="saisie-zone">
+  <div class="small fw-600 text-muted mb-3" style="text-transform:uppercase;letter-spacing:.5px">
+    <i class="bi bi-keyboard me-2"></i>Saisir un matricule
+  </div>
+
+  <div class="matricule-input-wrap">
+    <input type="text" id="matriculeInput"
+           placeholder="Matricule (ex: OCP007)"
+           maxlength="20" autocomplete="off" autofocus/>
+    <button id="btnSaisir" onclick="handleAction()" title="Rechercher / Confirmer">
+      <i class="bi bi-arrow-right" id="btnIcon"></i>
+    </button>
+  </div>
+
+  <!-- Résultat agent -->
+  <div id="agentPanel">
+    <div class="agent-av" id="agentAv">—</div>
+    <div class="flex-fill">
+      <div class="fw-700" id="agentNom" style="font-size:.95rem"></div>
+      <div class="text-muted small" id="agentInfo"></div>
+    </div>
+    <div id="agentAction"></div>
+  </div>
+</div>
+
+<!-- Table des saisies -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-list-check text-primary me-2"></i>
+      Saisies – {{ ev.get_type_avance_display }} {{ ev.annee }}
+    </span>
+    <div class="d-flex gap-2">
+      <a href="{% url 'demandes:export_excel' %}?event={{ ev.pk }}"
+         class="btn btn-sm btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+      </a>
+      <a href="{% url 'demandes:export_pdf' %}?event={{ ev.pk }}"
+         class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive" style="max-height:420px;overflow-y:auto">
+      <table class="table table-ocp table-saisies mb-0">
+        <thead style="position:sticky;top:0;z-index:1">
+          <tr>
+            <th>#</th>
+            <th>Matricule</th>
+            <th>Nom complet</th>
+            <th>Service</th>
+            <th class="text-center">Statut</th>
+            <th>Heure</th>
+          </tr>
+        </thead>
+        <tbody id="saisiesBody">
+          {% for d in mes_demandes %}
+          <tr>
+            <td class="text-muted small">{{ forloop.counter }}</td>
+            <td>
+              <code style="background:#f0f4fa;padding:2px 8px;border-radius:5px;
+                           font-size:.78rem;color:#005EB8">{{ d.agent.matricule }}</code>
+            </td>
+            <td class="fw-500 small">{{ d.agent.nom_complet }}</td>
+            <td class="small text-muted">{{ d.agent.service }}</td>
+            <td class="text-center">
+              <span class="badge {% if d.statut == 'INCLUS' %}badge-inclus{% else %}badge-exclus{% endif %}">
+                {{ d.get_statut_display }}
+              </span>
+            </td>
+            <td class="small text-muted">{{ d.date_saisie|date:"H:i:s" }}</td>
+          </tr>
+          {% empty %}
+          <tr id="emptyRow">
+            <td colspan="6" class="text-center text-muted py-5">
+              <i class="bi bi-inbox d-block mb-2 fs-2 opacity-25"></i>
+              Aucune saisie — commencez par saisir un matricule ci-dessus.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div class="toast-stack" id="toastStack"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LOOKUP_URL  = "{% url 'agents:lookup' %}";
+const SAISIE_URL  = "{% url 'demandes:ajax_saisie' ev.pk %}";
+const CSRF_TOKEN  = "{{ csrf_token }}";
+const STATUT_LABEL= "{{ ev.logique.0 }}";
+const EVENT_TYPE  = "{{ ev.type_avance }}";
+
+let state        = 'idle';   // idle | found | doublon | error
+let agentData    = null;
+let sessionCount = 0;
+
+const input    = document.getElementById('matriculeInput');
+const panel    = document.getElementById('agentPanel');
+const btnSaisir= document.getElementById('btnSaisir');
+const btnIcon  = document.getElementById('btnIcon');
+
+// Entrée clavier
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); handleAction(); }
+  if (e.key === 'Escape') { resetForm(); }
+});
+input.addEventListener('input', () => {
+  if (state !== 'idle') resetForm();
+});
+
+async function handleAction() {
+  if (state === 'idle' || state === 'error') {
+    await rechercher();
+  } else if (state === 'found') {
+    await confirmer();
+  } else if (state === 'doublon') {
+    resetForm();
+  }
+}
+
+async function rechercher() {
+  const mat = input.value.trim().toUpperCase();
+  if (!mat) return;
+
+  input.classList.add('loading');
+  btnSaisir.disabled = true;
+  btnIcon.className = 'bi bi-hourglass-split';
+
+  try {
+    const r    = await fetch(`${LOOKUP_URL}?matricule=${encodeURIComponent(mat)}`);
+    const data = await r.json();
+
+    if (data.found) {
+      agentData = data;
+      state     = 'found';
+      input.classList.remove('loading');
+      input.classList.add('found');
+      btnIcon.className  = 'bi bi-check2';
+      btnSaisir.disabled = false;
+      showPanel('found',
+        `${data.prenom[0]}${data.nom[0]}`,
+        data.nom + ' ' + data.prenom,
+        `${data.matricule} · ${data.service}`,
+        `<span class="badge {% if ev.logique.0 == 'INCLUS' %}badge-inclus{% else %}badge-exclus{% endif %} px-3">
+           Sera enregistré : ${STATUT_LABEL}
+         </span>
+         <span class="text-muted small ms-2">Appuyez sur <span class="kbd-hint">Enter</span> pour confirmer</span>`
+      );
+    } else {
+      state = 'error';
+      input.classList.remove('loading');
+      input.classList.add('error');
+      btnIcon.className  = 'bi bi-x';
+      btnSaisir.disabled = false;
+      showPanel('error', '!', 'Matricule introuvable', data.error,
+        `<button class="btn btn-sm btn-outline-secondary" onclick="resetForm()">
+           <i class="bi bi-arrow-left me-1"></i>Réessayer
+         </button>`);
+    }
+  } catch(e) {
+    state = 'error';
+    input.classList.remove('loading');
+    input.classList.add('error');
+    showPanel('error', '!', 'Erreur réseau', 'Impossible de joindre le serveur.', '');
+  }
+}
+
+async function confirmer() {
+  btnSaisir.disabled = true;
+  btnIcon.className  = 'bi bi-hourglass-split';
+
+  try {
+    const r    = await fetch(SAISIE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF_TOKEN,
+      },
+      body: JSON.stringify({ matricule: agentData.matricule }),
+    });
+    const data = await r.json();
+
+    if (data.ok) {
+      sessionCount++;
+      ajouterLigne(data.demande);
+      mettreAJourCompteurs(data.totaux);
+      showToast('success',
+        `<i class="bi bi-check-circle-fill me-2" style="color:#1a7b4b"></i>
+         <div><strong>${agentData.prenom} ${agentData.nom}</strong><br>
+         <small class="text-muted">Enregistré [${data.demande.statut}]</small></div>`);
+      resetForm();
+    } else if (data.doublon) {
+      state = 'doublon';
+      input.classList.remove('found');
+      input.classList.add('error');
+      showPanel('doublon', '⚠', agentData.nom + ' ' + agentData.prenom,
+        'Cet agent a déjà été saisi pour cet événement.',
+        `<button class="btn btn-sm btn-outline-secondary" onclick="resetForm()">Continuer</button>`);
+      showToast('warning',
+        `<i class="bi bi-exclamation-triangle me-2" style="color:#f59e0b"></i>
+         <div><strong>Doublon détecté</strong><br>
+         <small class="text-muted">${agentData.prenom} ${agentData.nom} déjà saisi</small></div>`);
+    } else {
+      showToast('error',
+        `<i class="bi bi-x-circle me-2" style="color:#c0392b"></i>
+         <div><strong>Erreur</strong><br><small class="text-muted">${data.error}</small></div>`);
+      resetForm();
+    }
+  } catch(e) {
+    showToast('error',
+      `<i class="bi bi-x-circle me-2" style="color:#c0392b"></i>
+       <div><strong>Erreur réseau</strong></div>`);
+    resetForm();
+  }
+}
+
+function showPanel(type, av, nom, info, action) {
+  const avEl     = document.getElementById('agentAv');
+  const nomEl    = document.getElementById('agentNom');
+  const infoEl   = document.getElementById('agentInfo');
+  const actionEl = document.getElementById('agentAction');
+
+  avEl.textContent  = av;
+  avEl.className    = 'agent-av' + (type === 'error' || type === 'doublon' ? (type==='doublon'?' warn':' err') : '');
+  nomEl.textContent = nom;
+  infoEl.innerHTML  = info;
+  actionEl.innerHTML= action;
+
+  panel.className   = `agentPanel ${type}`;
+  panel.style.cssText = `display:flex;background:${
+    type==='found'   ? '#f0f6ff' :
+    type==='doublon' ? '#fff9e6' : '#fff5f5'
+  };border:1.5px solid ${
+    type==='found'   ? '#c8dcf5' :
+    type==='doublon' ? '#ffc107' : '#f5c6cb'
+  };border-radius:12px;padding:18px 22px;margin-top:16px;
+  align-items:center;gap:16px;animation:slideIn .2s ease`;
+}
+
+function resetForm() {
+  state     = 'idle';
+  agentData = null;
+  input.value = '';
+  input.className = '';
+  input.classList.remove('found', 'error', 'loading');
+  panel.style.display = 'none';
+  btnSaisir.disabled  = false;
+  btnIcon.className   = 'bi bi-arrow-right';
+  input.focus();
+}
+
+function ajouterLigne(d) {
+  const tbody    = document.getElementById('saisiesBody');
+  const emptyRow = document.getElementById('emptyRow');
+  if (emptyRow) emptyRow.remove();
+
+  const count = tbody.querySelectorAll('tr').length + 1;
+  const badgeCls = d.statut === 'INCLUS' ? 'badge-inclus' : 'badge-exclus';
+
+  const tr = document.createElement('tr');
+  tr.className = 'row-new';
+  tr.innerHTML = `
+    <td class="text-muted small">${count}</td>
+    <td><code style="background:#f0f4fa;padding:2px 8px;border-radius:5px;font-size:.78rem;color:#005EB8">${d.matricule}</code></td>
+    <td class="fw-500 small">${d.nom_complet}</td>
+    <td class="small text-muted">${d.service}</td>
+    <td class="text-center"><span class="badge ${badgeCls}">${d.statut}</span></td>
+    <td class="small text-muted">${d.heure}</td>`;
+
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  // Scroll to top
+  const container = tbody.closest('.table-responsive');
+  if (container) container.scrollTop = 0;
+}
+
+function mettreAJourCompteurs(t) {
+  document.getElementById('cntTotal').textContent   = t.total;
+  document.getElementById('cntInclus').textContent  = t.inclus;
+  document.getElementById('cntExclus').textContent  = t.exclus;
+  document.getElementById('cntSession').textContent = sessionCount;
+  document.getElementById('headerCount').textContent= t.total + ' saisie(s)';
+}
+
+function showToast(type, html) {
+  const stack = document.getElementById('toastStack');
+  const div   = document.createElement('div');
+  div.className = `toast-item ${type}`;
+  div.innerHTML = html;
+  stack.appendChild(div);
+  setTimeout(() => {
+    div.style.animation = 'toastOut .3s ease forwards';
+    setTimeout(() => div.remove(), 300);
+  }, 3000);
+}
+</script>
+{% endblock %}

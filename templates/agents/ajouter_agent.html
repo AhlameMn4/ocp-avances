@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}Attribuer un agent{% endblock %}
+{% block page_title %}Attribuer un agent à un service{% endblock %}
+
+{% block extra_css %}
+<style>
+  .form-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 28px 36px;
+    color: white;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .form-header-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: rgba(255,255,255,.18);
+    border: 2px solid rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; flex-shrink: 0;
+  }
+  .field-group {
+    border: 1.5px solid #e5eaf3;
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: #fafbff;
+    transition: border-color .2s, background .2s;
+    margin-bottom: 0;
+  }
+  .field-group:focus-within {
+    border-color: #005EB8;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(0,94,184,.07);
+  }
+  .field-group label {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 7px;
+  }
+  .field-group input,
+  .field-group select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: .95rem;
+    font-weight: 500;
+    color: #1a2540;
+    outline: none;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .agent-card {
+    background: #f0f6ff;
+    border: 1.5px solid #c8dcf5;
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .agent-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: #005EB8; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .info-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; border: 1px solid #e5eaf3;
+    padding: 4px 12px; border-radius: 100px;
+    font-size: .78rem; color: #374151; font-weight: 500;
+  }
+  .step-indicator {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 28px;
+  }
+  .step-dot {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .85rem; flex-shrink: 0;
+  }
+  .step-dot.active { background: #005EB8; color: white; }
+  .step-dot.done   { background: #1a7b4b; color: white; }
+  .step-dot.idle   { background: #e5eaf3; color: #9ca3af; }
+  .step-line { flex: 1; height: 2px; background: #e5eaf3; }
+  .step-line.done { background: #1a7b4b; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête -->
+<div class="form-header">
+  <div class="form-header-icon">
+    <i class="bi bi-person-plus"></i>
+  </div>
+  <div>
+    <div style="font-family:'Poppins',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:4px">
+      Attribuer un agent à un service
+    </div>
+    <div style="opacity:.75;font-size:.85rem">
+      Recherchez un agent existant dans la base, puis attribuez-le au service d'un gestionnaire.
+    </div>
+  </div>
+  <a href="{% url 'agents:admin_agents' %}" class="ms-auto d-flex align-items-center gap-2"
+     style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+            color:white;border-radius:9px;padding:9px 18px;font-size:.85rem;
+            font-weight:600;text-decoration:none;"
+     onmouseover="this.style.background='rgba(255,255,255,.25)'"
+     onmouseout="this.style.background='rgba(255,255,255,.15)'">
+    <i class="bi bi-arrow-left"></i> Retour
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <!-- Indicateur étapes -->
+    <div class="step-indicator">
+      <div class="step-dot {% if agent_trouve %}done{% else %}active{% endif %}">
+        {% if agent_trouve %}<i class="bi bi-check"></i>{% else %}1{% endif %}
+      </div>
+      <div class="small fw-600 {% if not agent_trouve %}text-primary{% else %}text-muted{% endif %}">
+        Rechercher l'agent
+      </div>
+      <div class="step-line {% if agent_trouve %}done{% endif %}"></div>
+      <div class="step-dot {% if agent_trouve %}active{% else %}idle{% endif %}">2</div>
+      <div class="small fw-600 {% if agent_trouve %}text-primary{% else %}text-muted{% endif %}">
+        Choisir le service
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger mb-4">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    {% if not agent_trouve %}
+    <!-- ── ÉTAPE 1 : Recherche ── -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-search text-primary me-2"></i>Étape 1 — Rechercher un agent par matricule
+      </div>
+      <div class="card-body p-4">
+        <p class="text-muted small mb-4">
+          Saisissez le matricule d'un agent déjà enregistré dans la base OCP.
+          Seuls les agents existants peuvent être attribués à un service.
+        </p>
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="rechercher"/>
+          <div class="field-group mb-4">
+            <label>Matricule de l'agent *</label>
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-person-badge text-primary" style="font-size:1.1rem;flex-shrink:0"></i>
+              <input type="text" name="matricule"
+                     value="{{ matricule_recherche|default:'' }}"
+                     placeholder="Ex : OCP007"
+                     style="text-transform:uppercase;letter-spacing:1px"
+                     required autofocus/>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-ocp w-100">
+            <i class="bi bi-search me-2"></i>Rechercher cet agent
+          </button>
+        </form>
+
+        <!-- Aide -->
+        <div class="mt-4 p-3 rounded-3" style="background:#f8faff;border:1.5px solid #e5eaf3">
+          <div class="small fw-600 text-muted mb-2">
+            <i class="bi bi-info-circle me-1"></i>Comment ça fonctionne
+          </div>
+          <ol class="small text-muted mb-0" style="padding-left:18px;line-height:2">
+            <li>Saisissez le matricule d'un agent présent dans la base</li>
+            <li>Vérifiez ses informations affichées</li>
+            <li>Sélectionnez le gestionnaire / service cible</li>
+            <li>Le gestionnaire recevra une notification automatique</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- ── ÉTAPE 2 : Attribution ── -->
+
+    <!-- Carte agent trouvé -->
+    <div class="agent-card mb-4">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="agent-avatar">{{ agent_trouve.initiales }}</div>
+        <div>
+          <div class="fw-700" style="font-size:1.05rem;color:#1a2540">
+            {{ agent_trouve.nom_complet }}
+          </div>
+          <div class="text-muted small mt-1">
+            <code style="background:white;padding:2px 9px;border-radius:6px;
+                         font-size:.82rem;color:#005EB8;border:1px solid #e5eaf3">
+              {{ agent_trouve.matricule }}
+            </code>
+          </div>
+        </div>
+        <span class="badge badge-actif ms-auto px-3 py-2">
+          <i class="bi bi-check-circle me-1"></i>Agent trouvé
+        </span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if agent_trouve.service %}
+        <span class="info-pill">
+          <i class="bi bi-building text-muted"></i>
+          Service actuel : <strong>{{ agent_trouve.service }}</strong>
+        </span>
+        {% endif %}
+        {% if agent_trouve.poste %}
+        <span class="info-pill">
+          <i class="bi bi-briefcase text-muted"></i>
+          {{ agent_trouve.poste }}
+        </span>
+        {% endif %}
+        {% if agent_trouve.email %}
+        <span class="info-pill">
+          <i class="bi bi-envelope text-muted"></i>
+          {{ agent_trouve.email }}
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Formulaire attribution -->
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-building text-primary me-2"></i>Étape 2 — Choisir le service cible
+      </div>
+      <div class="card-body p-4">
+        <p class="text-muted small mb-4">
+          Sélectionnez le gestionnaire dont vous souhaitez attribuer cet agent.
+          Le service sera automatiquement mis à jour et le gestionnaire sera notifié.
+        </p>
+
+        <form method="POST">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="attribuer"/>
+          <input type="hidden" name="matricule" value="{{ agent_trouve.matricule }}"/>
+
+          <div class="field-group mb-4">
+            <label>Gestionnaire / Service cible *</label>
+            <div class="d-flex align-items-center gap-3">
+              <i class="bi bi-person-badge text-primary" style="font-size:1.1rem;flex-shrink:0"></i>
+              <select name="service" id="serviceSelect" required onchange="updatePreview()">
+                <option value="">— Sélectionner un gestionnaire —</option>
+                {% for g in gestionnaires %}
+                <option value="{{ g.service }}" data-gestionnaire="{{ g.get_full_name }}">
+                  {{ g.get_full_name }} — {{ g.service }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Aperçu de l'attribution -->
+          <div id="apercuAttribution" style="display:none"
+               class="p-3 rounded-3 mb-4" style="background:#f0faf4;border:1.5px solid #b7dfca">
+            <div class="fw-600 small mb-2" style="color:#155724">
+              <i class="bi bi-arrow-right-circle me-2"></i>Résumé de l'attribution
+            </div>
+            <div class="small" style="line-height:1.9">
+              <div>
+                <span class="text-muted">Agent :</span>
+                <strong>{{ agent_trouve.nom_complet }}</strong>
+                ({{ agent_trouve.matricule }})
+              </div>
+              <div>
+                <span class="text-muted">Gestionnaire :</span>
+                <strong id="prevGest">—</strong>
+              </div>
+              <div>
+                <span class="text-muted">Nouveau service :</span>
+                <strong id="prevService">—</strong>
+              </div>
+              {% if agent_trouve.service %}
+              <div>
+                <span class="text-muted">Ancien service :</span>
+                <span style="color:#856404">{{ agent_trouve.service }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-ocp flex-fill" id="btnAttribuer" disabled>
+              <i class="bi bi-check-circle me-2"></i>Confirmer l'attribution
+            </button>
+            <a href="{% url 'agents:ajouter' %}" class="btn btn-outline-secondary flex-fill">
+              <i class="bi bi-arrow-left me-2"></i>Nouvelle recherche
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updatePreview() {
+  const sel   = document.getElementById('serviceSelect');
+  const opt   = sel.options[sel.selectedIndex];
+  const box   = document.getElementById('apercuAttribution');
+  const btn   = document.getElementById('btnAttribuer');
+  const pGest = document.getElementById('prevGest');
+  const pSvc  = document.getElementById('prevService');
+
+  if (sel.value) {
+    box.style.cssText = 'display:block;background:#f0faf4;border:1.5px solid #b7dfca;border-radius:12px;padding:16px 20px;margin-bottom:16px';
+    pGest.textContent = opt.dataset.gestionnaire || '—';
+    pSvc.textContent  = sel.value;
+    btn.disabled = false;
+  } else {
+    box.style.display = 'none';
+    btn.disabled = true;
+  }
+}
+</script>
+{% endblock %}

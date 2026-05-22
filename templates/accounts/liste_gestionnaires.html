@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Gestionnaires{% endblock %}
+{% block page_title %}Gestion des comptes gestionnaires{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">Comptes gestionnaires</h4>
+    <p class="text-muted mb-0 small">{{ data|length }} compte(s) enregistré(s)</p>
+  </div>
+  <a href="{% url 'accounts:creer_gestionnaire' %}" class="btn btn-ocp">
+    <i class="bi bi-person-add me-2"></i>Nouveau gestionnaire
+  </a>
+</div>
+
+<!-- Résumé stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="kpi kpi-blue">
+      <i class="bi bi-person-badge"></i>
+      <div class="kpi-val">{{ data|length }}</div>
+      <div class="kpi-lbl">Total gestionnaires</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi kpi-green">
+      <i class="bi bi-person-check"></i>
+      <div class="kpi-val">{% with actifs=0 %}{% for d in data %}{% if d.user.actif %}{% with actifs=actifs|add:1 %}{% endwith %}{% endif %}{% endfor %}{{ data|length }}{% endwith %}</div>
+      <div class="kpi-lbl">Comptes actifs</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi kpi-orange">
+      <i class="bi bi-people"></i>
+      <div class="kpi-val">{% with total=0 %}{% for d in data %}{% endfor %}—{% endwith %}</div>
+      <div class="kpi-lbl">Total agents gérés</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex align-items-center gap-3">
+      <i class="bi bi-person-badge text-primary"></i>
+      <span class="fw-600">Liste des gestionnaires</span>
+      <input type="text" id="searchGest" class="form-control ms-auto" style="max-width:240px"
+             placeholder="Rechercher…" oninput="filtrer(this.value)"/>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-ocp mb-0">
+        <thead>
+          <tr>
+            <th>Gestionnaire</th>
+            <th>Identifiant</th>
+            <th>Email</th>
+            <th>Service</th>
+            <th class="text-center">Agents</th>
+            <th class="text-center">Demandes</th>
+            <th class="text-center">Statut</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in data %}
+          <tr class="gest-row">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div style="width:34px;height:34px;border-radius:50%;background:#e8f0fa;color:#005EB8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">
+                  {{ d.user.initiales }}
+                </div>
+                <div>
+                  <div class="fw-600 small">{{ d.user.get_full_name }}</div>
+                  <div class="text-muted" style="font-size:.7rem">Depuis {{ d.user.date_creation|date:"d/m/Y" }}</div>
+                </div>
+              </div>
+            </td>
+            <td><code style="background:#f0f4fa;padding:3px 9px;border-radius:6px;font-size:.78rem">{{ d.user.username }}</code></td>
+            <td class="small text-muted">{{ d.user.email }}</td>
+            <td>
+              <span class="badge bg-light text-dark border small">{{ d.user.service|default:"—" }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge" style="background:#e8f0fa;color:#005EB8;font-weight:600">{{ d.nb_agents }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-light text-dark border">{{ d.nb_demandes }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge {% if d.user.actif %}badge-actif{% else %}badge-ferme{% endif %} px-3">
+                <i class="bi bi-{% if d.user.actif %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+                {% if d.user.actif %}Actif{% else %}Désactivé{% endif %}
+              </span>
+            </td>
+            <td>
+              <div class="d-flex gap-1 justify-content-center flex-wrap">
+                <a href="{% url 'accounts:profil_gestionnaire' d.user.pk %}"
+                   class="btn btn-sm btn-outline-primary py-0 px-2" title="Voir profil">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'accounts:modifier_gestionnaire' d.user.pk %}"
+                   class="btn btn-sm btn-outline-secondary py-0 px-2" title="Modifier">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'accounts:toggle_gestionnaire' d.user.pk %}"
+                   class="btn btn-sm {% if d.user.actif %}btn-outline-warning{% else %}btn-outline-success{% endif %} py-0 px-2"
+                   title="{% if d.user.actif %}Désactiver{% else %}Activer{% endif %}"
+                   onclick="return confirm('{% if d.user.actif %}Désactiver{% else %}Activer{% endif %} le compte de {{ d.user.get_full_name }} ?')">
+                  <i class="bi bi-{% if d.user.actif %}person-x{% else %}person-check{% endif %}"></i>
+                </a>
+                <a href="{% url 'accounts:supprimer_gestionnaire' d.user.pk %}"
+                   class="btn btn-sm btn-outline-danger py-0 px-2" title="Supprimer">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+              <i class="bi bi-people d-block mb-2 fs-2 opacity-25"></i>
+              Aucun gestionnaire. <a href="{% url 'accounts:creer_gestionnaire' %}">Créer le premier compte</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filtrer(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.gest-row').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

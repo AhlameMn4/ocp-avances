@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OCP Group – Plateforme Avances Sociales</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --ocp:      #005EB8;
+      --ocp-dark: #003f8a;
+      --ocp-lite: #e8f0fa;
+      --green:    #1a7b4b;
+      --orange:   #f0861a;
+      --gray-bg:  #f4f7fc;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; color: #1a2540; background: #fff; overflow-x: hidden; }
+
+    /* NAV */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      height: 66px; padding: 0 5%;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(255,255,255,.93); backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(0,94,184,.08);
+      transition: box-shadow .3s;
+    }
+    .navbar.stuck { box-shadow: 0 2px 24px rgba(0,94,184,.1); }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .brand-badge {
+      background: var(--ocp); color: #fff;
+      font-family: 'Poppins',sans-serif; font-weight: 800;
+      font-size: 1.05rem; letter-spacing: 2.5px;
+      padding: 6px 13px; border-radius: 8px;
+    }
+    .brand-text { line-height: 1.25; }
+    .brand-text strong { display: block; font-size: .9rem; font-weight: 700; color: #1a2540; }
+    .brand-text span   { font-size: .7rem; color: #6b7280; }
+    .nav-menu { display: flex; align-items: center; gap: 28px; }
+    .nav-menu a { color: #4b5563; text-decoration: none; font-size: .875rem; font-weight: 500; transition: color .2s; }
+    .nav-menu a:hover { color: var(--ocp); }
+    .btn-connect {
+      background: var(--ocp); color: #fff !important;
+      padding: 9px 22px; border-radius: 8px; font-weight: 600 !important;
+      transition: all .2s !important; white-space: nowrap;
+    }
+    .btn-connect:hover { background: var(--ocp-dark) !important; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,94,184,.28); }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(140deg, #002f6e 0%, #005EB8 55%, #1a7be0 100%);
+      display: flex; align-items: center;
+      padding: 100px 5% 70px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute;
+      width: 700px; height: 700px; border-radius: 50%;
+      background: rgba(255,255,255,.03);
+      top: -200px; right: -200px;
+    }
+    .hero::after {
+      content: ''; position: absolute;
+      width: 400px; height: 400px; border-radius: 50%;
+      background: rgba(255,255,255,.04);
+      bottom: -150px; left: -100px;
+    }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.13); color: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,255,255,.2);
+      padding: 5px 15px; border-radius: 100px;
+      font-size: .78rem; font-weight: 500; margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 800; color: #fff; line-height: 1.18; margin-bottom: 22px;
+    }
+    .hero h1 em { color: #7ecfff; font-style: normal; }
+    .hero-desc { color: rgba(255,255,255,.82); font-size: 1.05rem; line-height: 1.8; max-width: 510px; margin-bottom: 40px; }
+    .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-white {
+      background: #fff; color: var(--ocp);
+      padding: 13px 30px; border-radius: 9px;
+      font-weight: 700; font-size: .95rem; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all .2s; border: none;
+    }
+    .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.2); color: var(--ocp-dark); }
+    .btn-ghost {
+      background: transparent; color: #fff;
+      padding: 12px 26px; border-radius: 9px;
+      font-weight: 600; font-size: .95rem; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 2px solid rgba(255,255,255,.35); transition: all .2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.75); background: rgba(255,255,255,.08); color: #fff; }
+
+    /* HERO visual */
+    .hero-visual {
+      background: rgba(255,255,255,.07); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 18px; padding: 24px; max-width: 420px; width: 100%;
+    }
+    .hv-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+      padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,.12);
+    }
+    .hv-dot { width: 9px; height: 9px; border-radius: 50%; }
+    .hv-title { color: rgba(255,255,255,.85); font-size: .8rem; font-weight: 600; margin-left: 4px; }
+    .hv-kpi { display: flex; gap: 10px; margin-bottom: 18px; }
+    .hv-kpi-box {
+      flex: 1; border-radius: 10px; padding: 12px 10px;
+      background: rgba(255,255,255,.1); text-align: center;
+    }
+    .hv-kpi-val { font-family: 'Poppins',sans-serif; font-weight: 700; font-size: 1.5rem; color: #fff; }
+    .hv-kpi-lbl { font-size: .68rem; color: rgba(255,255,255,.65); margin-top: 2px; }
+    .hv-bar-row { margin-bottom: 10px; }
+    .hv-bar-label { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .hv-bar-label span { font-size: .72rem; color: rgba(255,255,255,.75); }
+    .hv-bar-label strong { font-size: .72rem; color: #fff; }
+    .hv-bar-track { height: 5px; border-radius: 100px; background: rgba(255,255,255,.15); }
+    .hv-bar-fill  { height: 100%; border-radius: 100px; }
+    .hv-status { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .hv-badge {
+      padding: 4px 12px; border-radius: 100px; font-size: .7rem; font-weight: 600;
+      background: rgba(255,255,255,.12); color: rgba(255,255,255,.9);
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .hv-badge.green { background: rgba(26,123,75,.3); border-color: rgba(26,123,75,.4); }
+    .hv-badge.blue  { background: rgba(0,94,184,.4); border-color: rgba(0,94,184,.5); }
+    .hv-lock { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.1); }
+    .hv-lock span { font-size: .72rem; color: rgba(255,255,255,.5); }
+
+    /* BAND */
+    .band { background: var(--ocp); padding: 40px 5%; }
+    .band-item { text-align: center; color: #fff; }
+    .band-val { font-family: 'Poppins',sans-serif; font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .band-lbl { font-size: .82rem; opacity: .8; margin-top: 5px; }
+
+    /* SECTIONS */
+    .sec { padding: 90px 5%; }
+    .sec-gray { background: var(--gray-bg); }
+    .sec-tag {
+      display: inline-block; background: var(--ocp-lite); color: var(--ocp);
+      font-size: .72rem; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; padding: 5px 14px; border-radius: 100px; margin-bottom: 14px;
+    }
+    .sec-h { font-family: 'Poppins',sans-serif; font-size: 1.9rem; font-weight: 700; margin-bottom: 14px; color: #1a2540; }
+    .sec-p { color: #6b7280; font-size: .95rem; line-height: 1.8; max-width: 520px; }
+
+    /* AVANCES */
+    .av-card {
+      border-radius: 16px; padding: 30px; height: 100%;
+      color: #fff; position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .av-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0,0,0,.15); }
+    .av-card::after {
+      content: ''; position: absolute;
+      width: 160px; height: 160px; border-radius: 50%;
+      background: rgba(255,255,255,.06);
+      bottom: -60px; right: -60px;
+    }
+    .av-icon { font-size: 2.4rem; margin-bottom: 16px; display: block; }
+    .av-card h4 { font-family: 'Poppins',sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+    .av-card p  { font-size: .875rem; line-height: 1.7; opacity: .88; margin-bottom: 18px; }
+    .av-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.25);
+      padding: 5px 14px; border-radius: 100px; font-size: .78rem; font-weight: 600;
+    }
+
+    /* FEATURES */
+    .feat-card {
+      background: #fff; border-radius: 14px; padding: 26px;
+      border: 1.5px solid #eef2f8; height: 100%;
+      transition: all .25s; position: relative; overflow: hidden;
+    }
+    .feat-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 3px; height: 100%;
+      background: var(--ocp); transform: scaleY(0);
+      transition: transform .25s; transform-origin: top;
+    }
+    .feat-card:hover { border-color: #cddff5; box-shadow: 0 10px 36px rgba(0,94,184,.09); transform: translateY(-4px); }
+    .feat-card:hover::before { transform: scaleY(1); }
+    .feat-icon {
+      width: 48px; height: 48px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.35rem; margin-bottom: 16px; flex-shrink: 0;
+    }
+    .feat-card h5 { font-weight: 700; font-size: .95rem; margin-bottom: 8px; }
+    .feat-card p  { color: #6b7280; font-size: .855rem; line-height: 1.65; margin: 0; }
+
+    /* ACTORS */
+    .actor-card {
+      background: #fff; border-radius: 16px; padding: 30px;
+      border: 1.5px solid #eef2f8; height: 100%;
+      transition: all .2s;
+    }
+    .actor-card:hover { border-color: #c8dcf5; box-shadow: 0 12px 36px rgba(0,94,184,.1); }
+    .actor-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    .actor-avatar {
+      width: 54px; height: 54px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .actor-head h5 { font-weight: 700; font-size: 1rem; margin-bottom: 3px; }
+    .actor-head span { font-size: .78rem; color: #9ca3af; }
+    .actor-list { list-style: none; }
+    .actor-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid #f1f5f9;
+      font-size: .875rem; color: #374151;
+    }
+    .actor-list li:last-child { border: none; padding-bottom: 0; }
+    .actor-list li i { color: var(--ocp); margin-top: 2px; flex-shrink: 0; }
+
+    /* STEPS */
+    .step { display: flex; gap: 18px; margin-bottom: 32px; }
+    .step-num {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      background: var(--ocp); color: #fff;
+      font-family: 'Poppins',sans-serif; font-weight: 700; font-size: .95rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-body h6 { font-weight: 700; margin-bottom: 5px; font-size: .9rem; }
+    .step-body p  { color: #6b7280; font-size: .855rem; line-height: 1.65; margin: 0; }
+
+    /* SECURITY */
+    .sec-item {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 18px; border-radius: 12px; margin-bottom: 14px;
+      background: #fff; border: 1.5px solid #eef2f8; transition: border-color .2s;
+    }
+    .sec-item:hover { border-color: #c8dcf5; }
+    .sec-item-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 1px; }
+    .sec-item h6 { font-weight: 700; font-size: .88rem; margin-bottom: 3px; }
+    .sec-item p  { color: #6b7280; font-size: .82rem; line-height: 1.55; margin: 0; }
+
+    /* CTA */
+    .cta-sec {
+      background: linear-gradient(135deg, #002f6e, #005EB8 60%, #1a7be0);
+      padding: 80px 5%; text-align: center;
+    }
+    .cta-sec h2 { font-family: 'Poppins',sans-serif; font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 14px; }
+    .cta-sec p  { color: rgba(255,255,255,.8); max-width: 460px; margin: 0 auto 36px; line-height: 1.75; }
+
+    /* FOOTER */
+    footer { background: #07112a; padding: 56px 5% 28px; color: rgba(255,255,255,.65); }
+    footer .f-logo span {
+      font-family: 'Poppins',sans-serif; font-weight: 800;
+      font-size: 1.2rem; letter-spacing: 2.5px;
+      background: var(--ocp); color: #fff;
+      padding: 5px 12px; border-radius: 6px;
+    }
+    footer h6 { color: #fff; font-size: .875rem; font-weight: 600; margin-bottom: 14px; }
+    footer ul { list-style: none; }
+    footer ul li { margin-bottom: 8px; }
+    footer ul li a { color: rgba(255,255,255,.55); text-decoration: none; font-size: .82rem; transition: color .2s; }
+    footer ul li a:hover { color: #fff; }
+    .f-line { border-color: rgba(255,255,255,.08); margin: 36px 0 20px; }
+    .f-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: .78rem; }
+    .f-secure { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.06); padding: 5px 12px; border-radius: 6px; font-size: .72rem; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="nav">
+  <a href="#" class="brand">
+    <div class="brand-badge">OCP</div>
+    <div class="brand-text">
+      <strong>Avances Sociales</strong>
+      <span>Direction des Ressources Humaines</span>
+    </div>
+  </a>
+  <div class="nav-menu d-none d-lg-flex">
+    <a href="#avances">Types d'avances</a>
+    <a href="#fonctionnalites">Fonctionnalités</a>
+    <a href="#acteurs">Acteurs</a>
+    <a href="#securite">Sécurité</a>
+    <a href="/accounts/login/" class="btn-connect">
+      <i class="bi bi-lock me-1"></i> Espace sécurisé
+    </a>
+  </div>
+  <a href="/accounts/login/" class="btn-connect d-lg-none">Connexion</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div style="max-width:1200px;margin:0 auto;width:100%;display:flex;align-items:center;gap:60px;flex-wrap:wrap">
+    <div style="flex:1;min-width:300px">
+      <div class="hero-pill">
+        <i class="bi bi-shield-check"></i>
+        Plateforme interne OCP — Accès restreint
+      </div>
+      <h1>
+        Gestion centralisée des<br/>
+        <em>avances sociales</em> OCP
+      </h1>
+      <p class="hero-desc">
+        Une solution digitale sécurisée pour la gestion des avances accordées aux agents OCP.
+        Traçabilité complète, contrôle des accès et exports intégrés.
+      </p>
+      <div class="hero-cta">
+        <a href="/accounts/login/" class="btn-white">
+          <i class="bi bi-box-arrow-in-right"></i> Accéder à mon espace
+        </a>
+        <a href="#avances" class="btn-ghost">
+          <i class="bi bi-info-circle"></i> En savoir plus
+        </a>
+      </div>
+    </div>
+
+    <!-- Visual (aucune vraie donnée) -->
+    <div class="hero-visual d-none d-xl-block">
+      <div class="hv-header">
+        <div class="hv-dot" style="background:#ef4444"></div>
+        <div class="hv-dot" style="background:#f59e0b"></div>
+        <div class="hv-dot" style="background:#22c55e"></div>
+        <span class="hv-title">Tableau de bord – Aperçu</span>
+      </div>
+      <div class="hv-kpi">
+        <div class="hv-kpi-box">
+          <div class="hv-kpi-val">—</div>
+          <div class="hv-kpi-lbl">Demandes</div>
+        </div>
+        <div class="hv-kpi-box">
+          <div class="hv-kpi-val" style="color:#86efac">—</div>
+          <div class="hv-kpi-lbl">Inclus</div>
+        </div>
+        <div class="hv-kpi-box">
+          <div class="hv-kpi-val" style="color:#fca5a5">—</div>
+          <div class="hv-kpi-lbl">Exclus</div>
+        </div>
+      </div>
+      <div class="hv-bar-row">
+        <div class="hv-bar-label"><span>Direction A</span><strong>••••</strong></div>
+        <div class="hv-bar-track"><div class="hv-bar-fill" style="width:75%;background:rgba(255,255,255,.4)"></div></div>
+      </div>
+      <div class="hv-bar-row">
+        <div class="hv-bar-label"><span>Direction B</span><strong>••••</strong></div>
+        <div class="hv-bar-track"><div class="hv-bar-fill" style="width:55%;background:rgba(255,255,255,.4)"></div></div>
+      </div>
+      <div class="hv-bar-row">
+        <div class="hv-bar-label"><span>Direction C</span><strong>••••</strong></div>
+        <div class="hv-bar-track"><div class="hv-bar-fill" style="width:40%;background:rgba(255,255,255,.4)"></div></div>
+      </div>
+      <div class="hv-status">
+        <span class="hv-badge green"><i class="bi bi-broadcast-pin me-1"></i>Campagne en cours</span>
+        <span class="hv-badge blue"><i class="bi bi-graph-up me-1"></i>Stats disponibles</span>
+      </div>
+      <div class="hv-lock">
+        <i class="bi bi-lock-fill" style="color:rgba(255,255,255,.3);font-size:.9rem"></i>
+        <span> Données visibles après connexion uniquement</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BAND -->
+<div class="band">
+  <div style="max-width:1000px;margin:0 auto">
+    <div class="row g-4">
+      <div class="col-6 col-md-3"><div class="band-item"><div class="band-val">3</div><div class="band-lbl">Types d'avances gérées</div></div></div>
+      <div class="col-6 col-md-3"><div class="band-item"><div class="band-val">2</div><div class="band-lbl">Rôles utilisateurs distincts</div></div></div>
+      <div class="col-6 col-md-3"><div class="band-item"><div class="band-val">100%</div><div class="band-lbl">Traçabilité des actions</div></div></div>
+      <div class="col-6 col-md-3"><div class="band-item"><div class="band-val">0</div><div class="band-lbl">Perte de données (historique permanent)</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TYPES D'AVANCES -->
+<section class="sec sec-gray" id="avances">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="text-center mb-5">
+      <span class="sec-tag">Avances sociales OCP</span>
+      <h2 class="sec-h">Trois types d'avances, une logique claire</h2>
+      <p class="sec-p mx-auto text-center">La plateforme gère chaque type d'avance avec sa propre logique métier, appliquée automatiquement à chaque saisie.</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="av-card" style="background:linear-gradient(140deg,#003f8a,#005EB8)">
+          <span class="av-icon">🌙</span>
+          <h4>Avance Aïd</h4>
+          <p>Prestation accordée aux agents OCP à l'occasion de la fête de l'Aïd. La liste saisie indique les agents qui ne bénéficient pas de cette avance.</p>
+          <span class="av-badge"><i class="bi bi-x-circle me-1"></i> Logique EXCLUS</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="av-card" style="background:linear-gradient(140deg,#145e38,#1a7b4b)">
+          <span class="av-icon">📚</span>
+          <h4>Avance Rentrée Scolaire</h4>
+          <p>Soutien financier pour la rentrée scolaire des enfants des agents OCP. Les agents saisis sont ceux exclus du bénéfice.</p>
+          <span class="av-badge"><i class="bi bi-x-circle me-1"></i> Logique EXCLUS</span>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="av-card" style="background:linear-gradient(140deg,#b85f00,#f0861a)">
+          <span class="av-icon">🏠</span>
+          <h4>Avance Pré-aménagement</h4>
+          <p>Aide accordée pour l'installation ou le déménagement des agents OCP. Les agents saisis sont ceux qui bénéficient de l'avance.</p>
+          <span class="av-badge"><i class="bi bi-check-circle me-1"></i> Logique INCLUS</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FONCTIONNALITÉS -->
+<section class="sec" id="fonctionnalites">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="text-center mb-5">
+      <span class="sec-tag">Fonctionnalités</span>
+      <h2 class="sec-h">Une plateforme complète pour les équipes RH</h2>
+      <p class="sec-p mx-auto text-center">Chaque fonctionnalité a été conçue pour répondre aux besoins réels de la gestion RH OCP.</p>
+    </div>
+    <div class="row g-4">
+      {% for feat in feats %}{% endfor %}
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#e8f0fa"><i class="bi bi-calendar-event" style="color:#005EB8;font-size:1.4rem"></i></div>
+          <h5>Gestion des campagnes</h5>
+          <p>Créez, publiez et suivez les événements d'avances avec période définie. Fermeture automatique garantie, historique permanent.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#e6f4ed"><i class="bi bi-pencil-square" style="color:#1a7b4b;font-size:1.4rem"></i></div>
+          <h5>Saisie guidée & sécurisée</h5>
+          <p>Identification de l'agent par matricule, confirmation avant enregistrement, anti-doublon automatique. Zéro erreur possible.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#fff3cd"><i class="bi bi-speedometer2" style="color:#e07b00;font-size:1.4rem"></i></div>
+          <h5>Tableau de bord analytique</h5>
+          <p>Statistiques en temps réel par service, gestionnaire et type. Graphiques interactifs pour le pilotage des campagnes.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#fdecea"><i class="bi bi-journal-check" style="color:#c0392b;font-size:1.4rem"></i></div>
+          <h5>Audit Trail complet</h5>
+          <p>Connexions, saisies, exports, modifications — tout est horodaté et attribué. Traçabilité totale pour le contrôle interne.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#e8f0fa"><i class="bi bi-file-earmark-excel" style="color:#005EB8;font-size:1.4rem"></i></div>
+          <h5>Export Excel professionnel</h5>
+          <p>Export formaté aux couleurs OCP avec filtres appliqués, en un clic. Prêt pour l'analyse et la direction.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feat-card">
+          <div class="feat-icon" style="background:#e6f4ed"><i class="bi bi-people" style="color:#1a7b4b;font-size:1.4rem"></i></div>
+          <h5>Gestion des accès</h5>
+          <p>Création des comptes gestionnaires, envoi automatique par email, activation/désactivation. Contrôle total des accès.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTEURS -->
+<section class="sec sec-gray" id="acteurs">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="text-center mb-5">
+      <span class="sec-tag">Acteurs du système</span>
+      <h2 class="sec-h">Deux rôles, deux espaces dédiés</h2>
+      <p class="sec-p mx-auto text-center">Chaque utilisateur accède uniquement aux fonctionnalités qui lui sont attribuées selon son rôle.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-5">
+        <div class="actor-card">
+          <div class="actor-head">
+            <div class="actor-avatar" style="background:#e8f0fa"><i class="bi bi-person-gear" style="color:#005EB8;font-size:1.5rem"></i></div>
+            <div>
+              <h5 style="color:#005EB8">Administrateur RH</h5>
+              <span>Accès complet à toutes les fonctionnalités</span>
+            </div>
+          </div>
+          <ul class="actor-list">
+            <li><i class="bi bi-check2"></i>Créer et gérer les campagnes d'avances</li>
+            <li><i class="bi bi-check2"></i>Créer et gérer les comptes gestionnaires</li>
+            <li><i class="bi bi-check2"></i>Superviser toutes les demandes saisies</li>
+            <li><i class="bi bi-check2"></i>Consulter les statistiques et l'audit trail</li>
+            <li><i class="bi bi-check2"></i>Exporter les données en Excel</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-5">
+        <div class="actor-card">
+          <div class="actor-head">
+            <div class="actor-avatar" style="background:#e6f4ed"><i class="bi bi-person-badge" style="color:#1a7b4b;font-size:1.5rem"></i></div>
+            <div>
+              <h5 style="color:#1a7b4b">Gestionnaire</h5>
+              <span>Accès limité aux événements actifs</span>
+            </div>
+          </div>
+          <ul class="actor-list">
+            <li><i class="bi bi-check2" style="color:#1a7b4b"></i>Consulter les événements actifs uniquement</li>
+            <li><i class="bi bi-check2" style="color:#1a7b4b"></i>Saisir les demandes des agents par matricule</li>
+            <li><i class="bi bi-check2" style="color:#1a7b4b"></i>Consulter ses propres saisies</li>
+            <li><i class="bi bi-x2" style="color:#dc3545"></i><span style="color:#9ca3af">Aucun accès aux données des autres gestionnaires</span></li>
+            <li><i class="bi bi-x2" style="color:#dc3545"></i><span style="color:#9ca3af">Aucun accès aux événements clôturés</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESSUS -->
+<section class="sec" id="processus">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <span class="sec-tag">Comment ça marche</span>
+        <h2 class="sec-h">Un cycle de gestion clair et traçable</h2>
+        <p class="sec-p">De la création de la campagne à l'export final, chaque étape est guidée, sécurisée et enregistrée.</p>
+        <a href="/accounts/login/" class="btn-white mt-4 d-inline-flex" style="background:var(--ocp);color:#fff">
+          <i class="bi bi-arrow-right-circle"></i> Accéder à mon espace
+        </a>
+      </div>
+      <div class="col-lg-7">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h6>L'administrateur crée la campagne</h6>
+            <p>Il définit le type d'avance, la période et l'année. L'événement est publié et devient immédiatement accessible aux gestionnaires autorisés.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h6>Les gestionnaires saisissent les demandes</h6>
+            <p>Chaque gestionnaire recherche un agent par matricule, vérifie ses informations, confirme. Le statut INCLUS/EXCLUS est attribué automatiquement.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h6>Fermeture automatique à l'échéance</h6>
+            <p>À l'expiration de la date de fin, la campagne se clôture. Les données sont conservées définitivement. Aucune saisie n'est possible après clôture.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h6>Analyse et export par l'administrateur</h6>
+            <p>L'administrateur consulte les statistiques, filtre par service ou gestionnaire, puis génère l'export Excel officiel pour la direction.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SÉCURITÉ -->
+<section class="sec sec-gray" id="securite">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <span class="sec-tag">Sécurité</span>
+        <h2 class="sec-h">Conçue pour la confiance</h2>
+        <p class="sec-p">Dans un contexte RH manipulant des données financières et personnelles, la sécurité est non négociable.</p>
+      </div>
+      <div class="col-lg-7">
+        <div class="sec-item"><div class="sec-item-icon">🔐</div><div><h6>Authentification obligatoire</h6><p>Toutes les pages sont protégées. Aucune donnée n'est accessible sans connexion. Session expirée automatiquement après inactivité.</p></div></div>
+        <div class="sec-item"><div class="sec-item-icon">👥</div><div><h6>Gestion des rôles stricte</h6><p>Administrateur RH et Gestionnaire ont des accès totalement séparés. Un gestionnaire ne peut jamais voir les données d'un autre.</p></div></div>
+        <div class="sec-item"><div class="sec-item-icon">🛡️</div><div><h6>Anti-doublons et validation serveur</h6><p>Impossible de saisir deux fois le même agent pour le même événement. Toutes les entrées sont validées côté serveur.</p></div></div>
+        <div class="sec-item"><div class="sec-item-icon">📋</div><div><h6>Journal d'audit immuable</h6><p>Connexions, saisies, exports, modifications — tout est horodaté et attribué à l'utilisateur avec son adresse IP.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-sec">
+  <h2>Accédez à votre espace sécurisé</h2>
+  <p>Cette plateforme est réservée au personnel OCP autorisé. Connectez-vous avec vos identifiants fournis par l'administration RH.</p>
+  <a href="/accounts/login/" class="btn-white" style="font-size:1rem;padding:14px 38px">
+    <i class="bi bi-lock me-2"></i>Se connecter à la plateforme
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="row g-5">
+      <div class="col-lg-4">
+        <div class="f-logo mb-3"><span>OCP</span></div>
+        <p style="font-size:.85rem;line-height:1.75">Plateforme de gestion des avances sociales — Direction des Ressources Humaines.</p>
+        <div class="f-secure mt-3"><i class="bi bi-shield-lock me-1"></i> Accès réservé au personnel OCP</div>
+      </div>
+      <div class="col-6 col-lg-2 offset-lg-2">
+        <h6>Plateforme</h6>
+        <ul>
+          <li><a href="#avances">Types d'avances</a></li>
+          <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+          <li><a href="#acteurs">Acteurs</a></li>
+          <li><a href="#securite">Sécurité</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Accès</h6>
+        <ul>
+          <li><a href="/accounts/login/">Connexion</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Support</h6>
+        <ul>
+          <li><a href="#">Contact RH</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="f-line"/>
+    <div class="f-bottom">
+      <span>© 2025 OCP Group – Direction des Ressources Humaines. Tous droits réservés.</span>
+      <span style="opacity:.4">Confidentiel – Usage interne exclusif</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('stuck', window.scrollY > 20);
+  });
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>

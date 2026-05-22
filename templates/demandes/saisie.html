@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}Saisie – {{ ev }}{% endblock %}
+{% block page_title %}Saisie des demandes{% endblock %}
+
+{% block extra_css %}
+<style>
+  .saisie-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 24px 32px;
+    color: white;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .logique-box {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; border-radius: 8px;
+    font-size: .82rem; font-weight: 600;
+  }
+  .input-matricule {
+    font-size: 1.1rem; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    border: 2px solid #e5eaf3; border-radius: 10px;
+    padding: 12px 16px; transition: all .2s;
+  }
+  .input-matricule:focus {
+    border-color: #005EB8;
+    box-shadow: 0 0 0 3px rgba(0,94,184,.1);
+    outline: none;
+  }
+  .agent-result-box {
+    background: #f0f6ff;
+    border: 1.5px solid #c8dcf5;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-top: 14px;
+    display: none;
+  }
+  .agent-av {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #005EB8; color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: 1rem; flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête événement -->
+<div class="saisie-header">
+  <div style="width:52px;height:52px;border-radius:13px;background:rgba(255,255,255,.18);
+              border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;
+              justify-content:center;font-size:1.5rem;flex-shrink:0">
+    <i class="bi bi-pencil-square"></i>
+  </div>
+  <div class="flex-fill">
+    <div style="font-family:'Poppins',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:4px">
+      {{ ev.get_type_avance_display }} {{ ev.annee }}
+    </div>
+    <div style="opacity:.75;font-size:.82rem">
+      <i class="bi bi-calendar3 me-1"></i>{{ ev.date_debut|date:"d/m/Y" }} → {{ ev.date_fin|date:"d/m/Y" }}
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+                 padding:6px 14px;border-radius:100px;font-size:.8rem;font-weight:600">
+      <i class="bi bi-{% if logique_label == 'INCLUS' %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+      Statut : {{ logique_label }}
+    </span>
+    <span class="badge bg-{{ ev.couleur }} px-3 py-2">{{ ev.jours_restants }}j restants</span>
+    <a href="{% url 'demandes:saisie_rapide' ev.pk %}"
+       style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);
+              color:white;border-radius:9px;padding:8px 16px;font-size:.82rem;
+              font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px"
+       onmouseover="this.style.background='rgba(255,255,255,.25)'"
+       onmouseout="this.style.background='rgba(255,255,255,.15)'">
+      <i class="bi bi-lightning-charge"></i> Mode rapide
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- ── Formulaire de saisie ── -->
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-search text-primary me-2"></i>Étape 1 – Rechercher l'agent
+      </div>
+      <div class="card-body p-4">
+
+        <!-- Explication logique -->
+        <div class="logique-box mb-4"
+             style="background:{% if logique_label == 'INCLUS' %}#d4edda{% else %}#f8d7da{% endif %}">
+          <i class="bi bi-{% if logique_label == 'INCLUS' %}check-circle-fill text-success{% else %}x-circle-fill text-danger{% endif %} fs-5"></i>
+          <span style="color:{% if logique_label == 'INCLUS' %}#155724{% else %}#721c24{% endif %}">
+            {{ logique_desc }}
+          </span>
+        </div>
+
+        <!-- Input matricule -->
+        <div class="mb-3">
+          <label class="form-label fw-500">Matricule de l'agent *</label>
+          <div class="d-flex gap-2">
+            <input type="text" id="matriculeInput"
+                   class="form-control input-matricule flex-fill"
+                   placeholder="Ex : OCP007"
+                   maxlength="20" autocomplete="off" autofocus/>
+            <button class="btn btn-ocp px-4" onclick="rechercherAgent()" type="button">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+          <div id="matriculeFeedback" class="small mt-2"></div>
+        </div>
+
+        <!-- Résultat agent -->
+        <div class="agent-result-box" id="agentResult">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="agent-av" id="agentAv">--</div>
+            <div>
+              <div class="fw-700" id="agentNom"></div>
+              <div class="text-muted small" id="agentMatricule"></div>
+            </div>
+          </div>
+          <div class="small mb-3">
+            <i class="bi bi-building me-2 text-muted"></i>
+            <span id="agentService"></span>
+          </div>
+
+          <!-- Formulaire confirmation -->
+          <form method="post" action="{% url 'demandes:confirmer' ev.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="matricule" id="hiddenMatricule"/>
+            <input type="hidden" name="action" value="preview"/>
+            <button type="submit" class="btn btn-ocp w-100">
+              <i class="bi bi-arrow-right-circle me-2"></i>Étape 2 – Confirmer la saisie
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Liste des saisies ── -->
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-list-check text-primary me-2"></i>
+          Mes saisies – {{ ev.get_type_avance_display }} {{ ev.annee }}
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary">{{ total }}</span>
+          <a href="{% url 'demandes:export_excel' %}?event={{ ev.pk }}"
+             class="btn btn-sm btn-outline-success" title="Export Excel">
+            <i class="bi bi-file-earmark-excel"></i>
+          </a>
+          <a href="{% url 'demandes:export_pdf' %}?event={{ ev.pk }}"
+             class="btn btn-sm btn-outline-danger" title="Export PDF">
+            <i class="bi bi-file-earmark-pdf"></i>
+          </a>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive" style="max-height:460px;overflow-y:auto">
+          <table class="table table-ocp mb-0">
+            <thead style="position:sticky;top:0;z-index:1">
+              <tr>
+                <th>#</th>
+                <th>Matricule</th>
+                <th>Agent</th>
+                <th>Service</th>
+                <th class="text-center">Statut</th>
+                <th>Heure</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in mes_demandes %}
+              <tr>
+                <td class="text-muted small">{{ forloop.counter }}</td>
+                <td>
+                  <code style="background:#f0f4fa;padding:2px 8px;border-radius:5px;
+                               font-size:.78rem;color:#005EB8">{{ d.agent.matricule }}</code>
+                </td>
+                <td class="fw-500 small">{{ d.agent.nom_complet }}</td>
+                <td class="small text-muted">{{ d.agent.service }}</td>
+                <td class="text-center">
+                  <span class="badge {% if d.statut == 'INCLUS' %}badge-inclus{% else %}badge-exclus{% endif %}">
+                    {{ d.get_statut_display }}
+                  </span>
+                </td>
+                <td class="small text-muted">{{ d.date_saisie|date:"H:i" }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                  <i class="bi bi-inbox d-block mb-2 fs-2 opacity-25"></i>
+                  Aucune saisie — commencez par chercher un matricule.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const LOOKUP_URL = "{% url 'agents:lookup' %}";
+
+async function rechercherAgent() {
+  const mat = document.getElementById('matriculeInput').value.trim().toUpperCase();
+  const fb  = document.getElementById('matriculeFeedback');
+  const box = document.getElementById('agentResult');
+
+  if (!mat) {
+    fb.innerHTML = '<span class="text-danger">Veuillez saisir un matricule.</span>';
+    return;
+  }
+
+  fb.innerHTML = '<span class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Recherche…</span>';
+  box.style.display = 'none';
+
+  try {
+    const r    = await fetch(`${LOOKUP_URL}?matricule=${encodeURIComponent(mat)}`);
+    const data = await r.json();
+
+    if (data.found) {
+      // Remplir les infos
+      const initiales = (data.prenom[0] + data.nom[0]).toUpperCase();
+      document.getElementById('agentAv').textContent         = initiales;
+      document.getElementById('agentNom').textContent        = data.prenom + ' ' + data.nom;
+      document.getElementById('agentMatricule').textContent  = data.matricule;
+      document.getElementById('agentService').textContent    = data.service;
+      document.getElementById('hiddenMatricule').value       = data.matricule;
+
+      box.style.display = 'block';
+      fb.innerHTML = '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Agent trouvé.</span>';
+    } else {
+      box.style.display = 'none';
+      fb.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${data.error}</span>`;
+    }
+  } catch (e) {
+    fb.innerHTML = '<span class="text-danger">Erreur réseau. Réessayez.</span>';
+  }
+}
+
+// Recherche sur Entrée
+document.getElementById('matriculeInput').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') { e.preventDefault(); rechercherAgent(); }
+});
+
+// Reset résultat si l'utilisateur modifie le matricule
+document.getElementById('matriculeInput').addEventListener('input', function() {
+  document.getElementById('agentResult').style.display = 'none';
+  document.getElementById('matriculeFeedback').innerHTML = '';
+});
+</script>
+{% endblock %}

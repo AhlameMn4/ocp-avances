@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Confirmer la suppression{% endblock %}
+{% block page_title %}Confirmer la suppression{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card" style="border-top:4px solid #dc3545">
+      <div class="card-body text-center p-5">
+        <div style="width:70px;height:70px;border-radius:50%;background:#f8d7da;
+                    display:flex;align-items:center;justify-content:center;
+                    margin:0 auto 20px;font-size:2rem;color:#c0392b">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <h5 class="fw-bold mb-2" style="color:#c0392b">Confirmer la suppression</h5>
+        <p class="text-muted mb-1">Vous êtes sur le point de supprimer définitivement le compte de :</p>
+        <p class="fw-bold fs-5 mb-4" style="color:#1a2540">{{ gest.get_full_name }}</p>
+        <div class="alert alert-warning text-start small mb-4">
+          <i class="bi bi-info-circle me-2"></i>
+          Cette action est <strong>irréversible</strong>. Les demandes saisies par ce gestionnaire
+          seront conservées dans l'historique.
+        </div>
+        <div class="d-flex gap-3 justify-content-center">
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="bi bi-trash me-2"></i>Supprimer définitivement
+            </button>
+          </form>
+          <a href="{% url 'accounts:liste_gestionnaires' %}" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-2"></i>Annuler
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

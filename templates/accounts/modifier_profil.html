@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}Modifier mon profil{% endblock %}
+{% block page_title %}Modifier mes informations{% endblock %}
+
+{% block extra_css %}
+<style>
+  .edit-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 28px 36px;
+    color: white;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .edit-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: rgba(255,255,255,.18);
+    border: 2.5px solid rgba(255,255,255,.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: 1.5rem; color: white; flex-shrink: 0;
+  }
+  .field-group {
+    background: #fafbff;
+    border: 1.5px solid #eef2f8;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color .2s;
+  }
+  .field-group:focus-within {
+    border-color: #005EB8;
+    background: #fff;
+  }
+  .field-group label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .field-group input {
+    border: none;
+    background: transparent;
+    font-size: .95rem;
+    font-weight: 500;
+    color: #1a2540;
+    width: 100%;
+    outline: none;
+    padding: 0;
+  }
+  .field-group input::placeholder { color: #c4c9d4; font-weight: 400; }
+  .field-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--ocp-lite); color: var(--ocp);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .95rem; flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête -->
+<div class="edit-header">
+  <div class="edit-avatar">{{ user.initiales }}</div>
+  <div>
+    <div style="font-family:'Poppins',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:4px">
+      Modifier mes informations
+    </div>
+    <div style="opacity:.75;font-size:.85rem">{{ user.get_full_name }} · {{ user.get_role_display }}</div>
+  </div>
+  <a href="{% url 'accounts:mon_profil' %}" class="ms-auto d-flex align-items-center gap-2"
+     style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:9px 18px;font-size:.85rem;font-weight:600;text-decoration:none;transition:all .2s"
+     onmouseover="this.style.background='rgba(255,255,255,.25)'"
+     onmouseout="this.style.background='rgba(255,255,255,.15)'">
+    <i class="bi bi-arrow-left"></i> Retour au profil
+  </a>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    {% if error %}
+    <div class="alert alert-danger mb-4">
+      <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header">
+        <i class="bi bi-pencil-square text-primary me-2"></i>Informations modifiables
+      </div>
+      <div class="card-body p-4">
+        <form method="POST" action="{% url 'accounts:modifier_profil' %}">
+          {% csrf_token %}
+
+          <!-- Prénom + Nom -->
+          <div class="row g-3 mb-2">
+            <div class="col-md-6">
+              <div class="field-group">
+                <label>Prénom *</label>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="field-icon"><i class="bi bi-person"></i></div>
+                  <input type="text" name="first_name"
+                         value="{{ user.first_name }}"
+                         placeholder="Votre prénom" required/>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="field-group">
+                <label>Nom *</label>
+                <div class="d-flex align-items-center gap-3">
+                  <div class="field-icon"><i class="bi bi-person-fill"></i></div>
+                  <input type="text" name="last_name"
+                         value="{{ user.last_name }}"
+                         placeholder="Votre nom" required/>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Téléphone -->
+          <div class="mb-2">
+            <div class="field-group">
+              <label>Téléphone</label>
+              <div class="d-flex align-items-center gap-3">
+                <div class="field-icon"><i class="bi bi-telephone"></i></div>
+                <input type="tel" name="telephone"
+                       value="{{ user.telephone }}"
+                       placeholder="+212 6xx xxx xxx"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Champs en lecture seule -->
+          <div class="p-3 rounded-3 mb-4" style="background:#f8faff;border:1.5px dashed #d0dff5">
+            <div class="small fw-600 text-muted mb-3" style="letter-spacing:.3px">
+              <i class="bi bi-lock me-2"></i>Champs non modifiables (gérés par l'administration)
+            </div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">Nom d'utilisateur</div>
+                <div class="fw-500" style="color:#6b7280">
+                  <code style="background:#e8f0fa;padding:3px 9px;border-radius:6px;font-size:.82rem;color:#005EB8">{{ user.username }}</code>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">Email</div>
+                <div class="fw-500" style="color:#6b7280">{{ user.email|default:"—" }}</div>
+              </div>
+              {% if user.is_gestionnaire %}
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">Service</div>
+                <div class="fw-500" style="color:#6b7280">{{ user.service|default:"—" }}</div>
+              </div>
+              {% endif %}
+              <div class="col-md-6">
+                <div class="small text-muted mb-1">Rôle</div>
+                <div class="fw-500" style="color:#6b7280">{{ user.get_role_display }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex gap-3">
+            <button type="submit" class="btn btn-ocp flex-fill">
+              <i class="bi bi-check-circle me-2"></i>Enregistrer les modifications
+            </button>
+            <a href="{% url 'accounts:mon_profil' %}" class="btn btn-outline-secondary flex-fill">
+              <i class="bi bi-x me-2"></i>Annuler
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Admin{% endblock %}
+{% block page_title %}Vue d'ensemble – Administration RH{% endblock %}
+
+{% block extra_css %}
+<style>
+  .stat-strip {
+    display: flex; gap: 0;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .stat-strip-item {
+    flex: 1; padding: 22px 24px;
+    border-right: 1px solid #f1f5f9;
+    transition: background .15s;
+  }
+  .stat-strip-item:last-child { border-right: none; }
+  .stat-strip-item:hover { background: #fafbff; }
+  .stat-num {
+    font-family: 'Poppins', sans-serif;
+    font-size: 2rem; font-weight: 700;
+    line-height: 1; margin-bottom: 4px;
+    color: #1a2540;
+  }
+  .stat-lbl {
+    font-size: .78rem; color: #9ca3af;
+    font-weight: 500; text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .stat-trend {
+    font-size: .72rem; font-weight: 600;
+    margin-top: 4px;
+  }
+  .stat-icon {
+    font-size: 1.1rem; margin-bottom: 10px;
+    display: block;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% for a in alertes %}
+<div class="alert alert-warning d-flex align-items-center gap-3 mb-3"
+     style="border-left:4px solid #f59e0b;border-radius:10px">
+  <i class="bi bi-alarm fs-5 flex-shrink-0"></i>
+  <div class="flex-fill">
+    <strong>Clôture imminente :</strong> {{ a }} — ferme dans
+    <strong>{{ a.jours_restants }} jour(s)</strong> ({{ a.date_fin|date:"d/m/Y" }})
+  </div>
+  <a href="{% url 'events:detail' a.pk %}" class="btn btn-sm btn-warning fw-600">Voir →</a>
+</div>
+{% endfor %}
+
+<!-- Bande statistique -->
+<div class="stat-strip">
+  <div class="stat-strip-item">
+    <i class="bi bi-file-earmark-text stat-icon" style="color:#005EB8"></i>
+    <div class="stat-num">{{ total_demandes }}</div>
+    <div class="stat-lbl">Total demandes</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-check-circle stat-icon" style="color:#1a7b4b"></i>
+    <div class="stat-num" style="color:#1a7b4b">{{ total_inclus }}</div>
+    <div class="stat-lbl">Agents inclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-x-circle stat-icon" style="color:#c0392b"></i>
+    <div class="stat-num" style="color:#c0392b">{{ total_exclus }}</div>
+    <div class="stat-lbl">Agents exclus</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-people stat-icon" style="color:#f0861a"></i>
+    <div class="stat-num">{{ total_agents }}</div>
+    <div class="stat-lbl">Agents enregistrés</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-person-badge stat-icon" style="color:#6d28d9"></i>
+    <div class="stat-num">{{ total_gestionnaires }}</div>
+    <div class="stat-lbl">Gestionnaires actifs</div>
+  </div>
+  <div class="stat-strip-item">
+    <i class="bi bi-broadcast stat-icon" style="color:#0369a1"></i>
+    <div class="stat-num">{{ nb_events_actifs }}</div>
+    <div class="stat-lbl">Campagnes actives</div>
+  </div>
+</div>
+
+<!-- Graphiques -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-bar-chart text-primary me-2"></i>Demandes par service</span>
+        <a href="{% url 'demandes:liste_admin' %}" class="small text-primary text-decoration-none">Voir détail →</a>
+      </div>
+      <div class="card-body" style="padding:20px">
+        {% if stats_service %}
+          <canvas id="chartService" height="160"></canvas>
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-bar-chart d-block mb-2 fs-2 opacity-25"></i>
+            <small>Aucune donnée disponible</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-pie-chart text-primary me-2"></i>Par type d'avance
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        {% if stats_type %}
+          <canvas id="chartType" height="210"></canvas>
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-pie-chart d-block mb-2 fs-2 opacity-25"></i>
+            <small>Aucune donnée</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Inclus/Exclus par campagne -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-bar-chart-steps text-primary me-2"></i>Inclus / Exclus par campagne
+      </div>
+      <div class="card-body" style="padding:20px">
+        {% if stats_event %}
+          <canvas id="chartInclExcl" height="180"></canvas>
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-bar-chart-steps d-block mb-2 fs-2 opacity-25"></i>
+            <small>Aucune donnée</small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Campagnes actives -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-broadcast text-success me-2"></i>Campagnes en cours</span>
+        <a href="{% url 'events:liste' %}" class="small text-primary text-decoration-none">Gérer →</a>
+      </div>
+      <div class="card-body p-3">
+        {% if events_actifs %}
+          {% for ev in events_actifs %}
+          <div class="mb-3 p-3 rounded-3" style="background:#f8faff;border:1.5px solid #e5eaf3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <span class="fw-600 small">{{ ev.get_type_avance_display }}</span>
+                <span class="badge bg-light text-dark border ms-1 small">{{ ev.annee }}</span>
+              </div>
+              <span class="badge bg-{{ ev.couleur }} small">{{ ev.jours_restants }}j restants</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <small class="text-muted">{{ ev.date_debut|date:"d/m/Y" }} → {{ ev.date_fin|date:"d/m/Y" }}</small>
+              <small class="text-muted">{{ ev.demandes.count }} demande(s)</small>
+            </div>
+            <div class="progress" style="height:5px">
+              <div class="progress-bar" style="width:{{ ev.pct_temps_ecoule }}%;background:
+                {% if ev.couleur == 'danger' %}#dc3545
+                {% elif ev.couleur == 'warning' %}#ffc107
+                {% else %}#005EB8{% endif %}"></div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-calendar-x d-block mb-2 fs-2 opacity-25"></i>
+            <p class="small mb-2">Aucune campagne active</p>
+            <a href="{% url 'events:creer' %}" class="btn btn-sm btn-ocp">Créer une campagne</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Audit Trail -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-journal-text text-primary me-2"></i>Journal des actions – Audit Trail</span>
+    <span class="text-muted small">10 dernières actions</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-ocp mb-0">
+      <thead>
+        <tr>
+          <th>Date / Heure</th>
+          <th>Utilisateur</th>
+          <th>Action</th>
+          <th>Détail</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="small text-muted" style="white-space:nowrap">{{ log.date_heure|date:"d/m/Y H:i" }}</td>
+          <td class="small fw-500">{{ log.utilisateur|default:"—" }}</td>
+          <td>
+            <span class="badge bg-light text-dark border" style="font-size:.72rem">
+              {{ log.get_type_action_display }}
+            </span>
+          </td>
+          <td class="small text-muted">{{ log.description|truncatechars:65 }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-3">Aucune action enregistrée</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if stats_service %}
+const sLabels = [{% for s in stats_service %}"{{ s.agent__service|truncatechars:16 }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const sData   = [{% for s in stats_service %}{{ s.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartService'), {
+  type: 'bar',
+  data: {
+    labels: sLabels,
+    datasets: [{ label: 'Demandes', data: sData,
+      backgroundColor: 'rgba(0,94,184,.75)', borderRadius: 6, borderSkipped: false }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } }, x: { ticks: { font: { size: 11 } } } }
+  }
+});
+{% endif %}
+
+{% if stats_type %}
+const tLabels = [{% for t in stats_type %}"{{ t.event__type_avance }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const tData   = [{% for t in stats_type %}{{ t.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartType'), {
+  type: 'doughnut',
+  data: {
+    labels: tLabels,
+    datasets: [{ data: tData, backgroundColor: ['#005EB8','#1a7b4b','#f0861a'], borderWidth: 2, borderColor: '#fff' }]
+  },
+  options: {
+    responsive: true, cutout: '60%',
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
+  }
+});
+{% endif %}
+
+{% if stats_event %}
+const evLabels = [{% for e in stats_event %}"{{ e.get_type_avance_display|truncatechars:12 }} {{ e.annee }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+const evInclus = [{% for e in stats_event %}{{ e.nb_inclus }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const evExclus = [{% for e in stats_event %}{{ e.nb_exclus }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('chartInclExcl'), {
+  type: 'bar',
+  data: {
+    labels: evLabels,
+    datasets: [
+      { label: 'Inclus', data: evInclus, backgroundColor: 'rgba(26,123,75,.75)', borderRadius: 4 },
+      { label: 'Exclus', data: evExclus, backgroundColor: 'rgba(192,57,43,.75)',  borderRadius: 4 }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

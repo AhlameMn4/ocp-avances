@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Événements{% endblock %}
+{% block page_title %}Gestion des événements{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1" style="color:#1a2540">Campagnes d'avances</h4>
+    <p class="text-muted mb-0 small">{{ events.count }} événement(s) au total</p>
+  </div>
+  <a href="{% url 'events:creer' %}" class="btn btn-ocp">
+    <i class="bi bi-plus-circle me-2"></i>Nouvel événement
+  </a>
+</div>
+
+<!-- Événements actifs -->
+{% with actifs=events|dictsort:"statut" %}
+<div class="row g-3 mb-4">
+  {% for ev in events %}
+  {% if ev.est_actif %}
+  <div class="col-md-4">
+    <div class="event-card card">
+      <div class="event-type-bar {% if ev.type_avance == 'AID' %}type-aid{% elif ev.type_avance == 'RENTREE' %}type-rentree{% else %}type-preamenagement{% endif %}"></div>
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <div>
+            <h6 class="fw-bold mb-1" style="color:#1a2540">{{ ev.get_type_avance_display }}</h6>
+            <span class="badge bg-light text-dark border">{{ ev.annee }}</span>
+          </div>
+          <span class="badge badge-actif"><i class="bi bi-broadcast me-1"></i>Actif</span>
+        </div>
+        <div class="small text-muted mb-1"><i class="bi bi-calendar me-1"></i>{{ ev.date_debut|date:"d/m/Y" }} → {{ ev.date_fin|date:"d/m/Y" }}</div>
+        <div class="mb-3">
+          {% if ev.jours_restants <= 2 %}
+          <span class="badge bg-danger"><i class="bi bi-alarm me-1"></i>{{ ev.jours_restants }} jour(s) restants</span>
+          {% elif ev.jours_restants <= 5 %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-alarm me-1"></i>{{ ev.jours_restants }} jours restants</span>
+          {% else %}
+          <span class="badge badge-actif">{{ ev.jours_restants }} jours restants</span>
+          {% endif %}
+        </div>
+        <div class="progress mb-3" style="height:6px">
+          <div class="progress-bar bg-primary" style="width:{{ ev.pct_temps_ecoule }}%"></div>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <small class="text-muted"><i class="bi bi-file-text me-1"></i>{{ ev.demandes.count }} demande(s)</small>
+          <div class="d-flex gap-2">
+            <a href="{% url 'events:detail' ev.pk %}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'events:modifier' ev.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endwith %}
+
+<!-- Tous les événements -->
+<div class="card">
+  <div class="card-header"><i class="bi bi-list-ul text-primary me-2"></i>Tous les événements</div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-ocp mb-0">
+        <thead>
+          <tr>
+            <th>Type</th><th>Année</th><th>Période</th>
+            <th class="text-center">Statut</th>
+            <th class="text-center">Demandes</th>
+            <th>Créé par</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ev in events %}
+          <tr>
+            <td>
+              <span class="fw-500">{{ ev.get_type_avance_display }}</span>
+            </td>
+            <td>{{ ev.annee }}</td>
+            <td class="small text-muted">{{ ev.date_debut|date:"d/m/Y" }} → {{ ev.date_fin|date:"d/m/Y" }}</td>
+            <td class="text-center">
+              {% if ev.est_actif %}
+              <span class="badge badge-actif"><i class="bi bi-broadcast me-1"></i>Actif</span>
+              {% else %}
+              <span class="badge badge-ferme"><i class="bi bi-lock me-1"></i>Fermé</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <span class="badge bg-light text-dark border">{{ ev.demandes.count }}</span>
+            </td>
+            <td class="small text-muted">{{ ev.cree_par.get_full_name|default:"—" }}</td>
+            <td class="text-center">
+              <div class="d-flex gap-2 justify-content-center">
+                <a href="{% url 'events:detail' ev.pk %}" class="btn btn-sm btn-outline-primary" title="Détail"><i class="bi bi-eye"></i></a>
+                {% if ev.est_actif %}
+                <a href="{% url 'events:modifier' ev.pk %}" class="btn btn-sm btn-outline-secondary" title="Modifier"><i class="bi bi-pencil"></i></a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-5">
+            <i class="bi bi-calendar-x display-6 d-block mb-2 opacity-25"></i>Aucun événement
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

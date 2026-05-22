@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil – {{ user.get_full_name }}{% endblock %}
+{% block page_title %}Mon profil{% endblock %}
+
+{% block extra_css %}
+<style>
+  .profil-header {
+    background: linear-gradient(135deg, #002f6e 0%, #005EB8 60%, #1a7be0 100%);
+    border-radius: var(--radius);
+    padding: 36px 40px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .profil-header::before {
+    content: '';
+    position: absolute;
+    width: 260px; height: 260px; border-radius: 50%;
+    background: rgba(255,255,255,.04);
+    top: -80px; right: -80px;
+  }
+  .profil-header::after {
+    content: '';
+    position: absolute;
+    width: 160px; height: 160px; border-radius: 50%;
+    background: rgba(255,255,255,.05);
+    bottom: -50px; left: 200px;
+  }
+  .profil-avatar-lg {
+    width: 88px; height: 88px; border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    border: 3px solid rgba(255,255,255,.35);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Poppins', sans-serif; font-weight: 800;
+    font-size: 2.1rem; color: white; flex-shrink: 0;
+    position: relative; z-index: 1;
+  }
+  .profil-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    padding: 5px 14px; border-radius: 100px;
+    font-size: .78rem; font-weight: 500;
+  }
+  .info-block {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .15s;
+  }
+  .info-block:last-child { border-bottom: none; }
+  .info-block:hover { background: #fafbff; }
+  .info-icon-box {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--ocp-lite); color: var(--ocp);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .info-lbl { font-size: .72rem; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 2px; }
+  .info-val { font-size: .9rem; color: #1a2540; font-weight: 600; }
+  .notif-item-p {
+    display: flex; gap: 14px; padding: 14px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background .15s;
+  }
+  .notif-item-p:last-child { border-bottom: none; }
+  .notif-item-p:hover { background: #fafbff; }
+  .notif-item-p.unread { background: #f0f6ff; border-left: 3px solid #005EB8; }
+  .notif-icon-box {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── EN-TÊTE ── -->
+<div class="profil-header">
+  <div class="d-flex align-items-center gap-4" style="position:relative;z-index:1">
+    <div class="profil-avatar-lg">{{ user.initiales }}</div>
+    <div>
+      <div style="font-family:'Poppins',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:6px;line-height:1.2">
+        {{ user.get_full_name|default:user.username }}
+      </div>
+      <div style="opacity:.75;font-size:.88rem;margin-bottom:14px">{{ user.email|default:"Email non renseigné" }}</div>
+      <div class="d-flex gap-2 flex-wrap">
+        {% if user.is_admin_rh %}
+        <span class="profil-pill"><i class="bi bi-shield-check"></i>Administrateur RH</span>
+        {% else %}
+        <span class="profil-pill"><i class="bi bi-person-badge"></i>Gestionnaire</span>
+        {% if user.service %}
+        <span class="profil-pill"><i class="bi bi-building"></i>{{ user.service }}</span>
+        {% endif %}
+        {% endif %}
+        <span class="profil-pill"><i class="bi bi-calendar3"></i>Membre depuis {{ user.date_creation|date:"d/m/Y" }}</span>
+        <span class="profil-pill" style="background:{% if user.actif %}rgba(26,123,75,.3){% else %}rgba(192,57,43,.3){% endif %}">
+          <i class="bi bi-circle-fill" style="font-size:.5rem"></i>
+          {% if user.actif %}Compte actif{% else %}Compte désactivé{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="ms-auto">
+      <a href="{% url 'accounts:modifier_profil' %}" class="btn btn-white d-flex align-items-center gap-2"
+         style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;transition:all .2s"
+         onmouseover="this.style.background='rgba(255,255,255,.25)'"
+         onmouseout="this.style.background='rgba(255,255,255,.15)'">
+        <i class="bi bi-pencil-square"></i> Modifier mes informations
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- ── INFOS PERSONNELLES ── -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <i class="bi bi-person-lines-fill text-primary me-2"></i>Informations personnelles
+      </div>
+      <div class="card-body p-0">
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-person"></i></div>
+          <div>
+            <div class="info-lbl">Prénom</div>
+            <div class="info-val">{{ user.first_name|default:"—" }}</div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-person-fill"></i></div>
+          <div>
+            <div class="info-lbl">Nom</div>
+            <div class="info-val">{{ user.last_name|default:"—" }}</div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-at"></i></div>
+          <div>
+            <div class="info-lbl">Nom d'utilisateur</div>
+            <div class="info-val">
+              <code style="background:#f0f4fa;padding:3px 10px;border-radius:6px;font-size:.85rem;color:#005EB8">{{ user.username }}</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-envelope"></i></div>
+          <div>
+            <div class="info-lbl">Email professionnel</div>
+            <div class="info-val">{{ user.email|default:"—" }}</div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-telephone"></i></div>
+          <div>
+            <div class="info-lbl">Téléphone</div>
+            <div class="info-val">{{ user.telephone|default:"—" }}</div>
+          </div>
+        </div>
+
+        {% if user.is_gestionnaire %}
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-building"></i></div>
+          <div>
+            <div class="info-lbl">Service</div>
+            <div class="info-val">{{ user.service|default:"—" }}</div>
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INFOS COMPTE ── -->
+  <div class="col-lg-6">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-shield-lock text-primary me-2"></i>Informations du compte
+      </div>
+      <div class="card-body p-0">
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-person-badge"></i></div>
+          <div>
+            <div class="info-lbl">Rôle</div>
+            <div class="info-val">{{ user.get_role_display }}</div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-calendar-plus"></i></div>
+          <div>
+            <div class="info-lbl">Date de création du compte</div>
+            <div class="info-val">{{ user.date_creation|date:"d/m/Y à H:i" }}</div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-toggle-on"></i></div>
+          <div>
+            <div class="info-lbl">Statut</div>
+            <div class="info-val">
+              <span class="badge {% if user.actif %}badge-actif{% else %}badge-ferme{% endif %} px-3 py-2">
+                <i class="bi bi-{% if user.actif %}check-circle{% else %}x-circle{% endif %} me-1"></i>
+                {% if user.actif %}Compte actif{% else %}Compte désactivé{% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-icon-box"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div class="info-lbl">Dernière connexion</div>
+            <div class="info-val">{{ user.last_login|date:"d/m/Y à H:i"|default:"—" }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-bell text-primary me-2"></i>Notifications
+          {% if nb_notifs_sidebar > 0 %}
+          <span class="badge bg-danger ms-1" style="font-size:.65rem">{{ nb_notifs_sidebar }}</span>
+          {% endif %}
+        </span>
+        {% if nb_notifs_sidebar > 0 %}
+        <a href="{% url 'accounts:notifs_lues' %}" class="small text-primary text-decoration-none">Tout marquer lu</a>
+        {% endif %}
+      </div>
+      <div class="card-body p-0" style="max-height:280px;overflow-y:auto">
+        {% for n in user.notifications.all|slice:":6" %}
+        <div class="notif-item-p {% if not n.lue %}unread{% endif %}">
+          <div class="notif-icon-box" style="background:{% if n.type_notif == 'AGENT_AJOUTE' %}#e6f4ed{% else %}#e8f0fa{% endif %}">
+            <i class="bi bi-{% if n.type_notif == 'AGENT_AJOUTE' %}person-plus text-success{% else %}bell text-primary{% endif %}"></i>
+          </div>
+          <div class="flex-fill">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="fw-600 small">{{ n.titre }}</div>
+              {% if not n.lue %}
+              <span class="badge bg-primary ms-2" style="font-size:.6rem;flex-shrink:0">Nouveau</span>
+              {% endif %}
+            </div>
+            <div class="text-muted small mt-1" style="line-height:1.5">{{ n.message }}</div>
+            <div class="text-muted mt-1" style="font-size:.7rem">
+              <i class="bi bi-clock me-1"></i>{{ n.date_creation|date:"d/m/Y à H:i" }}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-bell-slash d-block mb-2 fs-3 opacity-25"></i>
+          <small>Aucune notification</small>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
