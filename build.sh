@@ -21,3 +21,4 @@ if not CustomUser.objects.filter(username='admin').exists():
 else:
     print('Admin existe déjà')
 "
+python manage.py loaddata agents/fixtures/agents_mock.json || true
